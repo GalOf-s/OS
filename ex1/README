@@ -1,0 +1,42 @@
+gal.ofer1, dorelby
+Gal Ofer (211589544), Student Name2 (318596616)
+EX: 1
+
+FILES:
+myfile.c -- a file with some code
+myfile.h -- a file with some headers
+
+REMARKS:
+These are some remarks that
+I want the graders to know
+about this submission.
+
+ANSWERS:
+
+Q1:
+This is our answer for the first assignment in the exercise - understanding wht the file "WhatIDo"
+does using strace:
+First when trying to simply run the program, we encountered an error message stating that the
+program expects an argument. after we provided an argument the program ran successfully.
+
+Right after the lines in the output of strace that describe the loading of the program, we start to
+see system calls made by the "actual body" of the program.
+From them we can see that the program does the following:
+1. creating a new directory called "Welcome" (using mkdir).
+2. creating a new directory called "To" inside "Welcome" (using mkdir).
+3. opening a new file called "OS2021" in "Welcome/To" (using openat).
+4. getting the file status using fstat.
+5. writing to the new file 3 lines (using write):
+   "<the user name of the user who ran the program>"
+   "If you haven't read the course guidelines yet --- do it right now!"
+   "<the argument provided when running the program>"
+6. closing the file (using close).
+7. deleting the file (using unlink).
+8. deleting the directory "To" (using rmdir).
+9. deleting the directory "Welcome" (using rmdir).
+
+Essentially, the program creates directories and file, writes to the file and than immediately
+deletes them all. So "to the naked eye" it appears as if nothing happened, but when examining the
+system calls made by the program we see everything that was described above.
+
+
