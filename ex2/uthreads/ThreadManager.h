@@ -1,7 +1,3 @@
-//
-// Created by gofer on 3/29/2022.
-//
-
 #ifndef UTHREADS_THREADMANAGER_H
 #define UTHREADS_THREADMANAGER_H
 
@@ -12,9 +8,13 @@
 class ThreadManager
 {
 public:
-	std::vector<Thread> threads;
-	int minFreeId;
-	Thread getThreadById(int id);
+	ThreadManager(int maxThreadsNum);
+
+	static std::vector<Thread*> threads;
+	static Thread getThreadById(int id);
+private:
+	static int minFreeId;
+	static int max_threads_num;
 };
 
 

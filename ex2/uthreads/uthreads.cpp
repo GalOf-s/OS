@@ -1,11 +1,9 @@
 #include "uthreads.h"
+#include "ThreadManager.h"
 
 #include <iostream>
 
-void hello() // TODO: remove
-{
-	std::cout << "Hello, World!" << std::endl;
-}
+ThreadManager threadManager = ThreadManager(MAX_THREAD_NUM);
 
 int uthread_init(int quantum_usecs)
 {
