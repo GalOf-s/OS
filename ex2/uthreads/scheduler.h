@@ -10,16 +10,17 @@ class Scheduler
 public:
 	Scheduler(int quantum, const ThreadManager &manager);
 
-	static int add_thread(int id);
-	static int set_timer();
+	static int addThread(int id);
+	static int setTimer();
 
-	static void switch_thread(int sig);
+	static void switchThread(int sig);
 
 private:
 	static ThreadManager manager;
 	static std::queue<int> queue;
-	static int current_thread;
+	static int currentThread;
 	static int quantum;
+	static int totalQuantums;
 };
 
 

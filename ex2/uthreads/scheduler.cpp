@@ -1,7 +1,3 @@
-//
-// Created by gofer on 3/29/2022.
-//
-
 #include <sys/time.h>
 #include <iostream>
 #include "scheduler.h"
@@ -12,16 +8,16 @@
 Scheduler::Scheduler(int quantum, const ThreadManager& manager){
 
 	struct sigaction sa = {0};
-	sa.sa_handler = &Scheduler::switch_thread;
+	sa.sa_handler = &Scheduler::switchThread;
 	if (sigaction(SIGVTALRM, &sa, NULL) < 0)
 	{
 		printf("sigaction error.");
 	}
-	Scheduler::set_timer();
+	Scheduler::setTimer();
 }
 
 
-int Scheduler::set_timer(){
+int Scheduler::setTimer(){
 	struct itimerval timer;
 	timer.it_value.tv_sec = 0;        // first time interval, seconds part
 	timer.it_value.tv_usec = 0;        // first time interval, microseconds part
@@ -41,7 +37,7 @@ int Scheduler::set_timer(){
 	return 0;
 }
 
-void Scheduler::switch_thread(int sig)
+void Scheduler::switchThread(int sig)
 {
 	if(sig == SIGVTALRM){
 		int prev_tid = queue.front();
@@ -50,12 +46,12 @@ void Scheduler::switch_thread(int sig)
 	}
 
 	queue.pop();
-	current_thread = queue.front();
-	uthread_resume(current_thread);
+	currentThread = queue.front();
+	uthread_resume(currentThread);
 
 }
 
-int Scheduler::add_thread(int id)
+int Scheduler::addThread(int id)
 {
 	queue.push(id);
 }
