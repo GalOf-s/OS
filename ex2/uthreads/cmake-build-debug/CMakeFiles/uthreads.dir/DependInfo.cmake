@@ -1,18 +1,17 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
 # The set of languages for which implicit dependencies are needed:
 set(CMAKE_DEPENDS_LANGUAGES
-  "CXX"
   )
-# The set of files for implicit dependencies of each language:
-set(CMAKE_DEPENDS_CHECK_CXX
-  "/cygdrive/c/Users/gofer/Documents/University/OS/ex2/uthreads/scheduler.cpp" "/cygdrive/c/Users/gofer/Documents/University/OS/ex2/uthreads/cmake-build-debug/CMakeFiles/uthreads.dir/scheduler.cpp.o"
-  "/cygdrive/c/Users/gofer/Documents/University/OS/ex2/uthreads/thread.cpp" "/cygdrive/c/Users/gofer/Documents/University/OS/ex2/uthreads/cmake-build-debug/CMakeFiles/uthreads.dir/thread.cpp.o"
-  "/cygdrive/c/Users/gofer/Documents/University/OS/ex2/uthreads/thread_manager.cpp" "/cygdrive/c/Users/gofer/Documents/University/OS/ex2/uthreads/cmake-build-debug/CMakeFiles/uthreads.dir/thread_manager.cpp.o"
-  "/cygdrive/c/Users/gofer/Documents/University/OS/ex2/uthreads/uthreads.cpp" "/cygdrive/c/Users/gofer/Documents/University/OS/ex2/uthreads/cmake-build-debug/CMakeFiles/uthreads.dir/uthreads.cpp.o"
-  )
-set(CMAKE_CXX_COMPILER_ID "GNU")
 
-# The include file search paths:
-set(CMAKE_CXX_TARGET_INCLUDE_PATH
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/Thread.cpp" "CMakeFiles/uthreads.dir/Thread.cpp.o" "gcc" "CMakeFiles/uthreads.dir/Thread.cpp.o.d"
+  "/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/ThreadManager.cpp" "CMakeFiles/uthreads.dir/ThreadManager.cpp.o" "gcc" "CMakeFiles/uthreads.dir/ThreadManager.cpp.o.d"
+  "/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/scheduler.cpp" "CMakeFiles/uthreads.dir/scheduler.cpp.o" "gcc" "CMakeFiles/uthreads.dir/scheduler.cpp.o.d"
+  "/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/uthreads.cpp" "CMakeFiles/uthreads.dir/uthreads.cpp.o" "gcc" "CMakeFiles/uthreads.dir/uthreads.cpp.o.d"
   )
 
 # Targets to which this target links.

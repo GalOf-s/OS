@@ -8,13 +8,17 @@
 class ThreadManager
 {
 public:
-	ThreadManager(int maxThreadsNum);
-	int generateNewThreadId();
-	static std::vector<Thread*> threads;
-	static Thread getThreadById(int id);
+	static Thread *getThreadById(int id);
+
+    static void ThreadManager_init(int maxThreadsNum);
+    static int generateNewThreadId();
+
+
+
 private:
-	static int minFreeId;
-	static int maxThreadsNum;
+    static std::vector<Thread*> s_threads;
+    static int s_minFreeId;
+	static int _maxThreadsNum;
 };
 
 

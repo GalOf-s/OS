@@ -5,26 +5,47 @@
 #ifndef UTHREADS_THREAD_H
 #define UTHREADS_THREAD_H
 #include "uthreads.h"
+#include <setjmp.h>
+#include <signal.h>
+
 
 typedef unsigned int address_t;
 
+#define JB_SP 4
+#define JB_PC 5
+
+enum State{
+    RUNNING,
+    READY,
+    BLOCKED
+};
 class Thread
 {
 public:
-	Thread(thread_entry_point entryPoint, int id);
-	int init();
-	int terminate();
-	int block();
-	int resume();
-	int sleep();
+    sigjmp_buf env{};
 
+    Thread(thread_entry_point entryPoint, int id);
+
+    void setState(State newState);
+
+    void setQuantumCounter();
+
+    int init();
+    int terminate();
+    int block();
+
+    int resume();
+
+    int sleep();
 private:
-	thread_entry_point entryPoint{};
-	address_t sp{};
-	address_t pc{};
-	int id{};
-	int state{};
-	int quantums = 0;
+    int _id{};
+    State _state{};
+    char *_stack{};
+	int _quantumCounter{};
+
+
+    static address_t _translate_address(address_t addr);
+
 };
 
 

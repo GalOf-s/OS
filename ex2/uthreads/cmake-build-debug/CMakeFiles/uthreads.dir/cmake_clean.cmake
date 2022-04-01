@@ -1,8 +1,12 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/uthreads.dir/Thread.cpp.o"
+  "CMakeFiles/uthreads.dir/Thread.cpp.o.d"
+  "CMakeFiles/uthreads.dir/ThreadManager.cpp.o"
+  "CMakeFiles/uthreads.dir/ThreadManager.cpp.o.d"
   "CMakeFiles/uthreads.dir/scheduler.cpp.o"
-  "CMakeFiles/uthreads.dir/thread.cpp.o"
-  "CMakeFiles/uthreads.dir/thread_manager.cpp.o"
+  "CMakeFiles/uthreads.dir/scheduler.cpp.o.d"
   "CMakeFiles/uthreads.dir/uthreads.cpp.o"
+  "CMakeFiles/uthreads.dir/uthreads.cpp.o.d"
   "libuthreads.a"
   "libuthreads.pdb"
 )

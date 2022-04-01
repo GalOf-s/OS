@@ -8,7 +8,7 @@
 #define _UTHREADS_H
 
 
-#define MAX_THREAD_NUM 100 /* maximal number of threads */
+#define MAX_THREAD_NUM 100 /* maximal number of s_threads */
 #define STACK_SIZE 4096 /* stack size per Thread (in bytes) */
 
 typedef void (*thread_entry_point)(void);
@@ -21,7 +21,8 @@ typedef void (*thread_entry_point)(void);
  *
  * You may assume that this function is called before any other Thread library function, and that it is called
  * exactly once.
- * The input to the function is the length of a quantum in micro-seconds.
+ * The input to the function is the length of a quantum
+ * in micro-seconds.
  * It is an error to call this function with non-positive quantum_usecs.
  *
  * @return On success, return 0. On failure, return -1.
@@ -32,8 +33,8 @@ int uthread_init(int quantum_usecs);
  * @brief Creates a new Thread, whose entry point is the function entry_point with the signature
  * void entry_point(void).
  *
- * The Thread is added to the end of the READY threads list.
- * The uthread_spawn function should fail if it would cause the number of concurrent threads to exceed the
+ * The Thread is added to the end of the READY s_threads list.
+ * The uthread_spawn function should fail if it would cause the number of concurrent s_threads to exceed the
  * limit (MAX_THREAD_NUM).
  * Each Thread should be allocated with a stack of size STACK_SIZE bytes.
  *
@@ -82,7 +83,7 @@ int uthread_resume(int tid);
  * @brief Blocks the RUNNING Thread for num_quantums quantums.
  *
  * Immediately after the RUNNING Thread transitions to the BLOCKED state a scheduling decision should be made.
- * After the sleeping time is over, the Thread should go back to the end of the READY threads list.
+ * After the sleeping time is over, the Thread should go back to the end of the READY s_threads list.
  * The number of quantums refers to the number of times a new quantum starts, regardless of the reason. Specifically,
  * the quantum of the Thread which has made the call to uthread_sleep isn’t counted.
  * It is considered an error if the main Thread (tid==0) calls this function.

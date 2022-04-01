@@ -1,24 +1,21 @@
 #include "uthreads.h"
 #include "ThreadManager.h"
-#include "scheduler.h"
+#include "Scheduler.h"
 
 #include <iostream>
 
-extern ThreadManager threadManager;
-extern Scheduler scheduler;
-
 int uthread_init(int quantum_usecs)
 {
-	threadManager= ThreadManager(MAX_THREAD_NUM);
-	scheduler = Scheduler(quantum_usecs, threadManager);
+	ThreadManager::ThreadManager_init(MAX_THREAD_NUM);
+	Scheduler::Scheduler_init(quantum_usecs);
 	return 0;
 }
 
 int uthread_spawn(thread_entry_point entry_point)
 {
-	int id = threadManager.generateNewThreadId();
+	int id = ThreadManager::generateNewThreadId();
 	Thread new_thread = Thread(entry_point, id);
-	scheduler.addThread(id);
+	Scheduler::addThread(id);
 	return 0;
 }
 
