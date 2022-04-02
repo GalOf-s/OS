@@ -32,4 +32,4 @@
 *.app
 
 .idea/
-ex2/uthreads/cmake-build-debug/CMakeFiles/3.21.1/
+*/cmake-build-debug/*

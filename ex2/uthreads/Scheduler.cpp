@@ -10,6 +10,7 @@ void Scheduler::Scheduler_init(int quantum) {
     Scheduler::setTimer(quantum);
     s_currentThreadId = MAIN_THREAD_ID;
     ThreadManager::getThreadById(MAIN_THREAD_ID)->setState(RUNNING);
+	s_totalQuantums = 1;
 }
 
 
@@ -72,12 +73,13 @@ void Scheduler::switchThread(int sig)
 
 
             // set current running thread to next in line
-            s_currentThreadId = s_queue.front();
-            s_queue.pop();
 
-            Thread *currentThread = ThreadManager::getThreadById(s_currentThreadId);
+            Thread *currentThread = getNextReadyThread();
+			s_currentThreadId = currentThread->getId();
             currentThread->setState(RUNNING);
-            currentThread->setQuantumCounter();
+			currentThread->incQuantumCounter();
+			s_totalQuantums++;
+
 
             startTimer(); // starts the timer and jumps to run the thread
             siglongjmp(currentThread->env, 1);
@@ -91,7 +93,6 @@ void Scheduler::switchThread(int sig)
 
 int Scheduler::addThread(int id)
 {
-
 	s_queue.push(id);
 }
 
@@ -100,5 +101,17 @@ void Scheduler::startTimer() {
 	{
 		std::cout << "setitimer error."; // TODO check if to print
 	}
+}
+
+Thread *Scheduler::getNextReadyThread()
+{
+	Thread* currentThread;
+	do
+	{
+		s_currentThreadId = s_queue.front();
+		s_queue.pop();
+		currentThread = ThreadManager::getThreadById(s_currentThreadId);
+	} while (currentThread->getState() != READY);
+	return currentThread;
 }
 

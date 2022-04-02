@@ -24,13 +24,15 @@ class Thread
 public:
     sigjmp_buf env{};
 
-    Thread(thread_entry_point entryPoint, int id);
+    Thread(thread_entry_point entryPoint);
 
     void setState(State newState);
+	State getState(){return _state;};
 
-    void setQuantumCounter();
-
-    int init();
+    void incQuantumCounter();
+	void setId(int id){_id=id;};
+	int getId(){return _id;};
+	int getQuantumsCount(){return _quantumCounter;};
     int terminate();
     int block();
 

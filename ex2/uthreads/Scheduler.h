@@ -32,6 +32,7 @@ private:
     static ThreadManager s_threadManager;
     static std::queue<int> s_queue;
     static struct itimerval timer;
+	static Thread* getNextReadyThread();
 
 
 };

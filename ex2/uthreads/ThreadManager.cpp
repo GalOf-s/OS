@@ -29,3 +29,10 @@ int ThreadManager::generateNewThreadId()
 	}
 	return cur_min_free_id;
 }
+
+int ThreadManager::addNewThread(Thread* thread)
+{
+	int id = generateNewThreadId();
+	thread->setId(id);
+	s_threads[id] = thread;
+}

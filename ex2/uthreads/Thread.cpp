@@ -2,8 +2,7 @@
 
 
 
-Thread::Thread(thread_entry_point entryPoint, int id) {
-    _id = id;
+Thread::Thread(thread_entry_point entryPoint) {
     _state = READY;
     _stack = new char[STACK_SIZE];
     _quantumCounter = 0;
@@ -32,7 +31,17 @@ void Thread::setState(State newState) {
     _state = newState;
 }
 
-void Thread::setQuantumCounter() {
+void Thread::incQuantumCounter() {
     _quantumCounter++;
+}
+
+int Thread::block()
+{
+	if(_state == RUNNING){
+		_state = BLOCKED;
+		// TODO: send signal to scheduler
+	}
+	_state = BLOCKED; // TODO: remove from queue
+	return 0;
 }
 
