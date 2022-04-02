@@ -22,11 +22,21 @@ int uthread_spawn(thread_entry_point entry_point)
 
 int uthread_terminate(int tid)
 {
-	return 0;
+	if (ThreadManager::validateThreadId(tid) == -1){
+		return -1;
+	}
+
+	if(tid == MAIN_THREAD_ID){
+		// TODO: release memory;
+		exit(0);
+	}
 }
 
 int uthread_block(int tid)
 {
+	if (ThreadManager::validateThreadId(tid) == -1){
+		return -1;
+	}
 	Thread* target_thread = ThreadManager::getThreadById(tid);
 	target_thread->block();
 	return 0;
@@ -34,8 +44,11 @@ int uthread_block(int tid)
 
 int uthread_resume(int tid)
 {
+	if (ThreadManager::validateThreadId(tid) == -1){
+		return -1;
+	}
 	Thread* target_thread = ThreadManager::getThreadById(tid);
-	target_thread->setState(READY);
+	target_thread->resume();
 	Scheduler::addThread(tid);
 	return 0;
 }
@@ -58,7 +71,9 @@ int uthread_get_total_quantums()
 
 int uthread_get_quantums(int tid)
 {
-
+	if (ThreadManager::validateThreadId(tid) == -1){
+		return -1;
+	}
 	ThreadManager::getThreadById(tid)->getQuantumsCount();
 }
 

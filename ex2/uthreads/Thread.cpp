@@ -1,5 +1,5 @@
 #include "Thread.h"
-
+#include "Scheduler.h"
 
 
 Thread::Thread(thread_entry_point entryPoint) {
@@ -39,9 +39,32 @@ int Thread::block()
 {
 	if(_state == RUNNING){
 		_state = BLOCKED;
-		// TODO: send signal to scheduler
+		Scheduler::switchThread(SIGUSR1);
+		return 0;
 	}
 	_state = BLOCKED; // TODO: remove from queue
 	return 0;
+}
+
+int Thread::resume()
+{
+	if (_state == BLOCKED){
+		_state = READY;
+	}
+	return 0;
+}
+
+int Thread::terminate()
+{
+	if(_state==READY){
+		// TODO: remove from queue
+	}
+	
+	return 0;
+}
+
+Thread::~Thread()
+{
+	delete _stack;
 }
 

@@ -36,3 +36,21 @@ int ThreadManager::addNewThread(Thread* thread)
 	thread->setId(id);
 	s_threads[id] = thread;
 }
+
+int ThreadManager::validateThreadId(int id)
+{
+	if(id < 0 || MAX_THREAD_NUM - 1 < id){
+		return -1;
+	}
+	if (s_threads[id] == nullptr){
+		return -1;
+	}
+	return 0;
+}
+
+int ThreadManager::deleteThread(int id)
+{
+	delete s_threads[id];
+	s_threads[id] = nullptr;
+	return 0;
+}

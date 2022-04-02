@@ -25,6 +25,7 @@ public:
     sigjmp_buf env{};
 
     Thread(thread_entry_point entryPoint);
+	~Thread();
 
     void setState(State newState);
 	State getState(){return _state;};

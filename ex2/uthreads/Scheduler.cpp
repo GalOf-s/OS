@@ -54,8 +54,8 @@ void Scheduler::switchThread(int sig)
 //	}
 //
 //	queue.pop();
-//	currentThread = queue.front();
-//	uthread_resume(currentThread);
+//	nextCurrentThread = queue.front();
+//	uthread_resume(nextCurrentThread);
 
     // if the queue is empty when times up, then no one is ready so the main thread with keep running (?)
     // TODO check if ok
@@ -63,31 +63,22 @@ void Scheduler::switchThread(int sig)
         return;
     }
 
-    if (sig == SIGVTALRM){ // alarm turned on so switch to the next thread in line
-        Thread *prevThread = ThreadManager::getThreadById(s_currentThreadId); // the running thread time is up
-        int retValue = sigsetjmp(prevThread->env, 1);
-        bool switchThread = retValue == 0;
-        if (switchThread){
-            prevThread->setState(READY); // change the running thread state to ready
-            s_queue.push(s_currentThreadId); // push the current running thread to the back of the queue
+	Thread *prevThread = ThreadManager::getThreadById(s_currentThreadId); // the running thread time is up
+	int retValue = sigsetjmp(prevThread->env, 1);
+	bool switchThread = retValue == 0;
 
+	if (sig == SIGVTALRM && switchThread){ // alarm turned on so switch to the next thread in line
+		prevThread->setState(READY); // change the running thread state to ready
+		s_queue.push(s_currentThreadId); // push the current running thread t
+	}
 
-            // set current running thread to next in line
-
-            Thread *currentThread = getNextReadyThread();
-			s_currentThreadId = currentThread->getId();
-            currentThread->setState(RUNNING);
-			currentThread->incQuantumCounter();
-			s_totalQuantums++;
-
-
-            startTimer(); // starts the timer and jumps to run the thread
-            siglongjmp(currentThread->env, 1);
-        }
-    }
-
-    // TODO what other occasions should the thread be kept?
-
+	Thread *nextCurrentThread = getNextReadyThread();
+	s_currentThreadId = nextCurrentThread->getId(); // set current running thread to next in line
+	nextCurrentThread->setState(RUNNING);
+	nextCurrentThread->incQuantumCounter();
+	s_totalQuantums++;
+	startTimer(); // starts the timer and jumps to run the thread
+	siglongjmp(nextCurrentThread->env, 1);
 
 }
 

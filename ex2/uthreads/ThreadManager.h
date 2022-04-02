@@ -11,6 +11,8 @@ public:
 	static Thread *getThreadById(int id);
     static void ThreadManager_init(int maxThreadsNum);
 	static int addNewThread(Thread* thread);
+	static int validateThreadId(int id);
+	static int deleteThread(int id);
 private:
 	static std::vector<Thread*> s_threads;
 	static int generateNewThreadId();
