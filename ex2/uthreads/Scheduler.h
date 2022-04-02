@@ -3,7 +3,8 @@
 
 
 #include <sys/time.h>
-#include <queue>
+#include <vector>
+#include <algorithm>
 #include "ThreadManager.h"
 
 
@@ -14,25 +15,32 @@ class Scheduler
 {
 
 public:
-    static int s_currentThreadId;
-    static int s_totalQuantums;
+    static int getCurrentThreadId();
 
+    static int getTotalQuantums();
 
     static void Scheduler_init(int quantum);
 
-	static int addThread(int id);
+	static int addThreadToReady(int id);
 
-	static void setTimer(int quantum);
+    static int addThreadToSleep(int id, int numQuantums);
+
+    static void setTimer(int quantum);
 
 	static void switchThread(int sig);
 
     static void startTimer();
 
+    static void removeThreadFromReady(int id);
+
 private:
-    static ThreadManager s_threadManager;
-    static std::queue<int> s_queue;
+    static int s_currentThreadId;
+    static int s_totalQuantums;
+    static std::vector<int> s_readyThreads;
+    static std::vector<std::pair<int, int>> s_sleepThreads;
     static struct itimerval timer;
 	static Thread* getNextReadyThread();
+
 
 
 };

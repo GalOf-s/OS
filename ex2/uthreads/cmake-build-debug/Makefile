@@ -129,6 +129,30 @@ uthreads/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/build
 .PHONY : uthreads/fast
 
+Scheduler.o: Scheduler.cpp.o
+.PHONY : Scheduler.o
+
+# target to build an object file
+Scheduler.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/Scheduler.cpp.o
+.PHONY : Scheduler.cpp.o
+
+Scheduler.i: Scheduler.cpp.i
+.PHONY : Scheduler.i
+
+# target to preprocess a source file
+Scheduler.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/Scheduler.cpp.i
+.PHONY : Scheduler.cpp.i
+
+Scheduler.s: Scheduler.cpp.s
+.PHONY : Scheduler.s
+
+# target to generate assembly for a file
+Scheduler.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/Scheduler.cpp.s
+.PHONY : Scheduler.cpp.s
+
 Thread.o: Thread.cpp.o
 .PHONY : Thread.o
 
@@ -177,30 +201,6 @@ ThreadManager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/ThreadManager.cpp.s
 .PHONY : ThreadManager.cpp.s
 
-scheduler.o: scheduler.cpp.o
-.PHONY : scheduler.o
-
-# target to build an object file
-scheduler.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/scheduler.cpp.o
-.PHONY : scheduler.cpp.o
-
-scheduler.i: scheduler.cpp.i
-.PHONY : scheduler.i
-
-# target to preprocess a source file
-scheduler.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/scheduler.cpp.i
-.PHONY : scheduler.cpp.i
-
-scheduler.s: scheduler.cpp.s
-.PHONY : scheduler.s
-
-# target to generate assembly for a file
-scheduler.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/scheduler.cpp.s
-.PHONY : scheduler.cpp.s
-
 uthreads.o: uthreads.cpp.o
 .PHONY : uthreads.o
 
@@ -234,15 +234,15 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... uthreads"
+	@echo "... Scheduler.o"
+	@echo "... Scheduler.i"
+	@echo "... Scheduler.s"
 	@echo "... Thread.o"
 	@echo "... Thread.i"
 	@echo "... Thread.s"
 	@echo "... ThreadManager.o"
 	@echo "... ThreadManager.i"
 	@echo "... ThreadManager.s"
-	@echo "... scheduler.o"
-	@echo "... scheduler.i"
-	@echo "... scheduler.s"
 	@echo "... uthreads.o"
 	@echo "... uthreads.i"
 	@echo "... uthreads.s"

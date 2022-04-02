@@ -2,6 +2,8 @@
 #include "Scheduler.h"
 
 
+
+
 Thread::Thread(thread_entry_point entryPoint) {
     _state = READY;
     _stack = new char[STACK_SIZE];
@@ -16,16 +18,11 @@ Thread::Thread(thread_entry_point entryPoint) {
 
 }
 
-/* A translation is required when using an address of a variable.
-   Use this as a black box in your code. */
-address_t Thread::_translate_address(address_t addr) {
-    address_t ret;
-    asm volatile("xor    %%gs:0x18,%0\n"
-                 "rol    $0x9,%0\n"
-    : "=g" (ret)
-    : "0" (addr));
-    return ret;
+
+void Thread::ThreadInitMain() {
+
 }
+
 
 void Thread::setState(State newState) {
     _state = newState;
@@ -38,11 +35,10 @@ void Thread::incQuantumCounter() {
 int Thread::block()
 {
 	if(_state == RUNNING){
-		_state = BLOCKED;
 		Scheduler::switchThread(SIGUSR1);
-		return 0;
 	}
 	_state = BLOCKED; // TODO: remove from queue
+    Scheduler::removeThreadFromReady(_id);
 	return 0;
 }
 
@@ -50,21 +46,28 @@ int Thread::resume()
 {
 	if (_state == BLOCKED){
 		_state = READY;
+        //Scheduler::addThreadToReady(_id)
 	}
 	return 0;
 }
 
 int Thread::terminate()
 {
-	if(_state==READY){
-		// TODO: remove from queue
+	if(_state == READY){
+        Scheduler::removeThreadFromReady(_id); // removes thread from ready queue
 	}
-	
+    //TODO free stack
+	ThreadManager::deleteThread(_id);
 	return 0;
 }
 
 Thread::~Thread()
 {
 	delete _stack;
+    _stack = nullptr;
 }
 
+int Thread::sleep() {
+    return 0;
+
+}

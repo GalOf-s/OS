@@ -83,19 +83,19 @@ CMakeFiles/uthreads.dir/uthreads.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/uthreads.dir/uthreads.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/uthreads.cpp -o CMakeFiles/uthreads.dir/uthreads.cpp.s
 
-CMakeFiles/uthreads.dir/scheduler.cpp.o: CMakeFiles/uthreads.dir/flags.make
-CMakeFiles/uthreads.dir/scheduler.cpp.o: ../scheduler.cpp
-CMakeFiles/uthreads.dir/scheduler.cpp.o: CMakeFiles/uthreads.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/uthreads.dir/scheduler.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/uthreads.dir/scheduler.cpp.o -MF CMakeFiles/uthreads.dir/scheduler.cpp.o.d -o CMakeFiles/uthreads.dir/scheduler.cpp.o -c /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/scheduler.cpp
+CMakeFiles/uthreads.dir/Scheduler.cpp.o: CMakeFiles/uthreads.dir/flags.make
+CMakeFiles/uthreads.dir/Scheduler.cpp.o: ../Scheduler.cpp
+CMakeFiles/uthreads.dir/Scheduler.cpp.o: CMakeFiles/uthreads.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/uthreads.dir/Scheduler.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/uthreads.dir/Scheduler.cpp.o -MF CMakeFiles/uthreads.dir/Scheduler.cpp.o.d -o CMakeFiles/uthreads.dir/Scheduler.cpp.o -c /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/Scheduler.cpp
 
-CMakeFiles/uthreads.dir/scheduler.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/uthreads.dir/scheduler.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/scheduler.cpp > CMakeFiles/uthreads.dir/scheduler.cpp.i
+CMakeFiles/uthreads.dir/Scheduler.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/uthreads.dir/Scheduler.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/Scheduler.cpp > CMakeFiles/uthreads.dir/Scheduler.cpp.i
 
-CMakeFiles/uthreads.dir/scheduler.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/uthreads.dir/scheduler.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/scheduler.cpp -o CMakeFiles/uthreads.dir/scheduler.cpp.s
+CMakeFiles/uthreads.dir/Scheduler.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/uthreads.dir/Scheduler.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/Scheduler.cpp -o CMakeFiles/uthreads.dir/Scheduler.cpp.s
 
 CMakeFiles/uthreads.dir/Thread.cpp.o: CMakeFiles/uthreads.dir/flags.make
 CMakeFiles/uthreads.dir/Thread.cpp.o: ../Thread.cpp
@@ -128,7 +128,7 @@ CMakeFiles/uthreads.dir/ThreadManager.cpp.s: cmake_force
 # Object files for target uthreads
 uthreads_OBJECTS = \
 "CMakeFiles/uthreads.dir/uthreads.cpp.o" \
-"CMakeFiles/uthreads.dir/scheduler.cpp.o" \
+"CMakeFiles/uthreads.dir/Scheduler.cpp.o" \
 "CMakeFiles/uthreads.dir/Thread.cpp.o" \
 "CMakeFiles/uthreads.dir/ThreadManager.cpp.o"
 
@@ -136,7 +136,7 @@ uthreads_OBJECTS = \
 uthreads_EXTERNAL_OBJECTS =
 
 libuthreads.a: CMakeFiles/uthreads.dir/uthreads.cpp.o
-libuthreads.a: CMakeFiles/uthreads.dir/scheduler.cpp.o
+libuthreads.a: CMakeFiles/uthreads.dir/Scheduler.cpp.o
 libuthreads.a: CMakeFiles/uthreads.dir/Thread.cpp.o
 libuthreads.a: CMakeFiles/uthreads.dir/ThreadManager.cpp.o
 libuthreads.a: CMakeFiles/uthreads.dir/build.make

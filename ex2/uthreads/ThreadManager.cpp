@@ -21,13 +21,13 @@ int ThreadManager::generateNewThreadId()
         std::cerr << "thread library error: No more s_threads can be created\n";
 		return -1;
 	}
-	int cur_min_free_id = s_minFreeId;
+	int curMinFreeId = s_minFreeId;
 	for (int i = s_minFreeId + 1; i < _maxThreadsNum; i++){
 		if (s_threads[i] == nullptr){
 			s_minFreeId = i;
 		}
 	}
-	return cur_min_free_id;
+	return curMinFreeId;
 }
 
 int ThreadManager::addNewThread(Thread* thread)
@@ -50,7 +50,8 @@ int ThreadManager::validateThreadId(int id)
 
 int ThreadManager::deleteThread(int id)
 {
-	delete s_threads[id];
+
+    delete s_threads[id];
 	s_threads[id] = nullptr;
 	return 0;
 }
