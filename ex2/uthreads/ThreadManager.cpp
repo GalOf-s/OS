@@ -13,7 +13,7 @@ void ThreadManager::ThreadManager_init(int maxThreadsNum) {
         std::cerr << "system error: failed to allocate memory\n";
         exit(EXIT_FAILURE);
     }
-    s_threads[MAX_THREAD_ID] = new Thread(); // creates main thread
+    s_threads[MAIN_THREAD_ID] = mainThread; // creates main thread
 }
 
 
@@ -24,8 +24,8 @@ Thread *ThreadManager::getThreadById(int id)
 
 int ThreadManager::_generateNewThreadId()
 {
-	if (s_minFreeId == -1){
-		return -1;
+	if (s_minFreeId == FAILURE){
+		return FAILURE;
 	}
 	int curMinFreeId = s_minFreeId;
 	for (int i = s_minFreeId + 1; i < _maxThreadsNum; i++){
@@ -33,14 +33,18 @@ int ThreadManager::_generateNewThreadId()
 			s_minFreeId = i;
 		}
 	}
+	if(s_minFreeId == curMinFreeId){
+		s_minFreeId=1;
+	}
+
 	return curMinFreeId;
 }
 
 int ThreadManager::addNewThread(thread_entry_point entry_point)
 {
 	int id = _generateNewThreadId();
-    if(id == -1){
-        return -1;
+    if(id == FAILURE){
+        return FAILURE;
     }
     Thread *newThread = new Thread(id, entry_point);
     if(newThread == nullptr){
@@ -54,10 +58,10 @@ int ThreadManager::addNewThread(thread_entry_point entry_point)
 int ThreadManager::validateThreadId(int id)
 {
 	if(id < 0 || MAX_THREAD_ID - 1 < id){
-		return -1;
+		return FAILURE;
 	}
 	if (s_threads[id] == nullptr){
-		return -1;
+		return FAILURE;
 	}
 	return SUCCESS;
 }
@@ -75,7 +79,7 @@ void ThreadManager::ThreadManager_destruct() {
     }
 }
 
-void ThreadManager::terminate(int threadId) {
+void ThreadManager::terminate(int threadId) { // TODO: can be a method of Thread?
     Thread* targetThread = s_threads[threadId];
     if(targetThread->getState() == READY){
         Scheduler::removeThreadFromReady(threadId); // removes thread from ready queue

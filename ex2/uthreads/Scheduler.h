@@ -8,7 +8,6 @@
 #include "ThreadManager.h"
 
 
-#define MAIN_THREAD_ID 0
 #define MIC_TO_SEC 1000000
 
 class Scheduler
@@ -37,7 +36,7 @@ private:
     static int s_currentThreadId;
     static int s_totalQuantums;
     static std::vector<int> s_readyThreads;
-    static std::vector<std::pair<int, int>> s_sleepThreads;
+    static std::vector<std::pair<int, int>> s_sleepingThreads;
     static struct itimerval timer;
 	static Thread* getNextReadyThread();
 

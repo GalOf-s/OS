@@ -69,13 +69,13 @@ int uthread_resume(int tid)
 
 int uthread_sleep(int num_quantums)
 {
-    if(Scheduler::getCurrentThreadId() == MAIN_THREAD_ID){
-        std::cerr << "thread library error: unable to put the main thread to sleep\n";
-        return FAILURE;
-    }
-    int currentThread = Scheduler::getCurrentThreadId();
+	int currentThread = Scheduler::getCurrentThreadId();
+	if(currentThread == MAIN_THREAD_ID){
+		std::cerr << "thread library error: unable to put the main thread to sleep\n";
+		return FAILURE;
+	}
     Thread* targetThread = ThreadManager::getThreadById(currentThread);
-    targetThread->block();
+    targetThread->setState(READY);
     Scheduler::addThreadToSleep(currentThread, num_quantums);
 	return 0;
 }

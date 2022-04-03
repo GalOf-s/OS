@@ -4,9 +4,9 @@
 #include <vector>
 #include "Thread.h"
 
-#define SUCCESS 0;
-#define FAILURE -1;
-
+#define SUCCESS 0
+#define FAILURE -1
+#define MAIN_THREAD_ID 0
 
 
 class ThreadManager

@@ -2,13 +2,13 @@
 #include "Scheduler.h"
 
 
+sigjmp_buf env[2];
 
 Thread::Thread() {
     _id = 0;
     _state = RUNNING;
     _quantumCounter = 1;
 
-    sigsetjmp(env, 1);
 }
 
 Thread::Thread(int id, thread_entry_point entryPoint) {
@@ -52,7 +52,6 @@ int Thread::resume()
 {
 	if (_state == BLOCKED){
 		_state = READY;
-        //Scheduler::addThreadToReady(_id)
 	}
 	return 0;
 }
