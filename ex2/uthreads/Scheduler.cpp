@@ -57,13 +57,16 @@ void Scheduler::switchThread(int sig)
 //	currentThread = queue.front();
 //	uthread_resume(currentThread);
 
-    // if the queue is empty when times up, then no one is ready so the main thread with keep running (?)
-    // TODO check what to do
+    // TODO check what to do if the queue is empty when times up, then no one is ready so the main thread with keep running (?)
     if (s_readyThreads.empty()) {
         return;
     }
+    // TODO handle when a thread is blocked not to put in the ready line
+    // TODO handle what happens when a thread is sleeping, to send SIGVTALRM ?
 
     if (sig == SIGVTALRM){ // alarm turned on so switch to the next thread in line
+        manageSleepThreads();
+
         Thread *prevThread = ThreadManager::getThreadById(s_currentThreadId); // the running thread time is up
         int retValue = sigsetjmp(prevThread->env, 1);
         bool switchThread = retValue == 0;
@@ -80,19 +83,18 @@ void Scheduler::switchThread(int sig)
 			currentThread->incQuantumCounter();
 			s_totalQuantums++;
 
-            manageSleepThreads;
             startTimer(); // starts the timer and jumps to run the thread
             siglongjmp(currentThread->env, 1);
         }
     }
-
-    // TODO what other occasions should the thread be kept?
-
-
 }
 
 int Scheduler::addThreadToReady(int id)
 {
+    Thread *targetThread = ThreadManager::getThreadById(id);
+    if(targetThread->getState() != READY){
+        targetThread->setState(READY);
+    }
 	s_readyThreads.push_back(id);
 }
 
@@ -130,8 +132,15 @@ int Scheduler::getTotalQuantums() {
 }
 
 int Scheduler::addThreadToSleep(int id, int numQuantums) {
-    s_sleepThreads.emplace_back(id, numQuantums); // TODO check if numQuantums +1 needed
+    s_sleepThreads.emplace_back(id, numQuantums + 1); // TODO check if numQuantums +1 needed
 }
 
-void manageSleepThreads
+void Scheduler::manageSleepThreads(){
+    for (std::pair<int, int> &threadAsleep : s_sleepThreads){
+        threadAsleep.second--;
+        if (threadAsleep.second == 0){
+            Scheduler::addThreadToReady(threadAsleep.first);
+        }
+    }
+}
 

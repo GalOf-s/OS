@@ -4,20 +4,29 @@
 #include <vector>
 #include "Thread.h"
 
+#define SUCCESS 0;
+#define FAILURE -1;
+
+
 
 class ThreadManager
 {
 public:
-	static Thread *getThreadById(int id);
     static void ThreadManager_init(int maxThreadsNum);
-	static int addNewThread(Thread* thread);
+    static Thread *getThreadById(int id);
+	static int addNewThread(thread_entry_point entry_point);
 	static int validateThreadId(int id);
-	static int deleteThread(int id);
+    static void ThreadManager_destruct();
+    static void terminate(int threadId);
+
 private:
 	static std::vector<Thread*> s_threads;
-	static int generateNewThreadId();
 	static int s_minFreeId;
-	static int _maxThreadsNum;
+    static int _maxThreadsNum;
+
+    static int _generateNewThreadId();
+    static void _deleteThread(int id);
+
 };
 
 

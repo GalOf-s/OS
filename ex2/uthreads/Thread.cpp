@@ -3,8 +3,16 @@
 
 
 
+Thread::Thread() {
+    _id = 0;
+    _state = RUNNING;
+    _quantumCounter = 1;
 
-Thread::Thread(thread_entry_point entryPoint) {
+    sigsetjmp(env, 1);
+}
+
+Thread::Thread(int id, thread_entry_point entryPoint) {
+    _id = id;
     _state = READY;
     _stack = new char[STACK_SIZE];
     _quantumCounter = 0;
@@ -18,12 +26,6 @@ Thread::Thread(thread_entry_point entryPoint) {
 
 }
 
-
-void Thread::ThreadInitMain() {
-
-}
-
-
 void Thread::setState(State newState) {
     _state = newState;
 }
@@ -34,11 +36,15 @@ void Thread::incQuantumCounter() {
 
 int Thread::block()
 {
+    // TODO what happens if i block a thread that is sleeping , what happen to his quantum, can somthing like this happens?
+
 	if(_state == RUNNING){
+
 		Scheduler::switchThread(SIGUSR1);
+
 	}
 	_state = BLOCKED; // TODO: remove from queue
-    Scheduler::removeThreadFromReady(_id);
+    //Scheduler::removeThreadFromReady(_id);
 	return 0;
 }
 
@@ -51,20 +57,9 @@ int Thread::resume()
 	return 0;
 }
 
-int Thread::terminate()
-{
-	if(_state == READY){
-        Scheduler::removeThreadFromReady(_id); // removes thread from ready queue
-	}
-    //TODO free stack
-	ThreadManager::deleteThread(_id);
-	return 0;
-}
-
 Thread::~Thread()
 {
-	delete _stack;
-    _stack = nullptr;
+	delete[] _stack;
 }
 
 int Thread::sleep() {

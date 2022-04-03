@@ -42,7 +42,7 @@ private:
 	static Thread* getNextReadyThread();
 
 
-
+    static void manageSleepThreads();
 };
 
 

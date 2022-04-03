@@ -61,18 +61,16 @@ class Thread
 public:
     sigjmp_buf env{};
 
-    explicit Thread(thread_entry_point entryPoint);
-    static void ThreadInitMain();
+    explicit Thread(int id, thread_entry_point entryPoint);
+    explicit Thread();
 	~Thread();
 
     void setState(State newState);
 	State getState(){return _state;};
 
     void incQuantumCounter();
-	void setId(int id){_id=id;};
 	int getId() const{return _id;};
 	int getQuantumsCount() const{return _quantumCounter;};
-    int terminate();
     int block();
 
     int resume();

@@ -8,7 +8,7 @@
 #define _UTHREADS_H
 
 
-#define MAX_THREAD_NUM 100 /* maximal number of s_threads */
+#define MAX_THREAD_ID 100 /* maximal number of s_threads */
 #define STACK_SIZE 4096 /* stack size per Thread (in bytes) */
 
 typedef void (*thread_entry_point)(void);
@@ -35,7 +35,7 @@ int uthread_init(int quantum_usecs);
  *
  * The Thread is added to the end of the READY s_threads list.
  * The uthread_spawn function should fail if it would cause the number of concurrent s_threads to exceed the
- * limit (MAX_THREAD_NUM).
+ * limit (MAX_THREAD_ID).
  * Each Thread should be allocated with a stack of size STACK_SIZE bytes.
  *
  * @return On success, return the ID of the created Thread. On failure, return -1.
