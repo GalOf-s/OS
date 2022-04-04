@@ -34,29 +34,6 @@ void Thread::incQuantumCounter() {
     _quantumCounter++;
 }
 
-int Thread::block()
-{
-    // TODO what happens if i block a thread that is sleeping , what happen to his quantum, can somthing like this happens?
-
-	if(_state == RUNNING){
-
-		Scheduler::switchThread(SIGUSR1);
-
-	}
-	_state = BLOCKED; // TODO: remove from queue
-    Scheduler::removeThreadFromReady(_id);
-	return 0;
-}
-
-int Thread::resume()
-{
-	if (_state == BLOCKED){
-		_state = READY;
-        Scheduler::addThreadToReadyQueue(_id);
-	}
-	return 0;
-}
-
 Thread::~Thread()
 {
 	delete[] _stack;

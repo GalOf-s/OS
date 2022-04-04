@@ -68,10 +68,6 @@ public:
     void incQuantumCounter();
 	int getId() const{return _id;};
 	int getQuantumsCount() const{return _quantumCounter;};
-    int block();
-
-    int resume();
-
     int sleep();
 private:
     int _id{};

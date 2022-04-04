@@ -47,23 +47,12 @@ int uthread_terminate(int tid)
 
 int uthread_block(int tid)
 {
-	if (ThreadManager::validateThreadId(tid) == FAILURE){
-		return FAILURE; // TODO print something?
-	}
-	Thread* targetThread = ThreadManager::getThreadById(tid);
-	targetThread->block();
-	return SUCCESS;
+	return ThreadManager::blockThread(tid);
 }
 
 int uthread_resume(int tid)
 {
-	if (ThreadManager::validateThreadId(tid) == -1){
-		return FAILURE;
-	}
-	Thread* targetThread = ThreadManager::getThreadById(tid);
-	targetThread->resume();
-	Scheduler::addThreadToReadyQueue(tid);
-	return 0;
+	return ThreadManager::resumeThread(tid);
 }
 
 int uthread_sleep(int num_quantums)
