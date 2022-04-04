@@ -1,7 +1,3 @@
-//
-// Created by gofer on 3/29/2022.
-//
-
 #ifndef UTHREADS_THREAD_H
 #define UTHREADS_THREAD_H
 #include "uthreads.h"
@@ -53,13 +49,14 @@ address_t translate_address(address_t addr)
 enum State{
     RUNNING,
     READY,
-    BLOCKED
+    BLOCKED,
+	TERMINATED
 };
 
 class Thread
 {
 public:
-    sigjmp_buf env{};
+    sigjmp_buf env[2];
 
     explicit Thread(int id, thread_entry_point entryPoint);
     explicit Thread();

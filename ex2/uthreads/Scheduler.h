@@ -20,7 +20,7 @@ public:
 
     static void Scheduler_init(int quantum);
 
-	static int addThreadToReady(int id);
+	static int addThreadToReadyQueue(int id);
 
     static int addThreadToSleep(int id, int numQuantums);
 

@@ -18,12 +18,12 @@ public:
 	static int validateThreadId(int id);
     static void ThreadManager_destruct();
     static void terminate(int threadId);
+	static void deleteTerminatedThreads();
 
 private:
 	static std::vector<Thread*> s_threads;
 	static int s_minFreeId;
-    static int _maxThreadsNum;
-
+	static int _maxThreadsNum;
     static int _generateNewThreadId();
     static void _deleteThread(int id);
 

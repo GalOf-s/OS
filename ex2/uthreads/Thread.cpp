@@ -44,7 +44,7 @@ int Thread::block()
 
 	}
 	_state = BLOCKED; // TODO: remove from queue
-    //Scheduler::removeThreadFromReady(_id);
+    Scheduler::removeThreadFromReady(_id);
 	return 0;
 }
 
@@ -52,6 +52,7 @@ int Thread::resume()
 {
 	if (_state == BLOCKED){
 		_state = READY;
+        Scheduler::addThreadToReadyQueue(_id);
 	}
 	return 0;
 }

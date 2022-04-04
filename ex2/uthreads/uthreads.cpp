@@ -22,19 +22,17 @@ int uthread_init(int quantum_usecs)
 int uthread_spawn(thread_entry_point entry_point)
 {
     int newThreadId = ThreadManager::addNewThread(entry_point);
-	if(newThreadId == -1){
+	if(newThreadId == FAILURE){
         std::cerr << "thread library error: No more s_threads can be created\n";
         return FAILURE;
     }
-    Scheduler::addThreadToReady(newThreadId);
+	Scheduler::addThreadToReadyQueue(newThreadId);
 	return SUCCESS;
 }
 
 int uthread_terminate(int tid)
 {
-    // TODO what to do if a thread terminate itself?
-
-	if (ThreadManager::validateThreadId(tid) == -1){
+	if (ThreadManager::validateThreadId(tid) == FAILURE){
 		return FAILURE; // TODO print something?
 	}
 	if(tid == MAIN_THREAD_ID){
@@ -42,13 +40,14 @@ int uthread_terminate(int tid)
         ThreadManager::ThreadManager_destruct();
 		exit(SUCCESS);
 	}
+
     ThreadManager::terminate(tid);
     return SUCCESS;
 }
 
 int uthread_block(int tid)
 {
-	if (ThreadManager::validateThreadId(tid) == -1){
+	if (ThreadManager::validateThreadId(tid) == FAILURE){
 		return FAILURE; // TODO print something?
 	}
 	Thread* targetThread = ThreadManager::getThreadById(tid);
@@ -63,7 +62,7 @@ int uthread_resume(int tid)
 	}
 	Thread* targetThread = ThreadManager::getThreadById(tid);
 	targetThread->resume();
-    Scheduler::addThreadToReady(tid);
+	Scheduler::addThreadToReadyQueue(tid);
 	return 0;
 }
 

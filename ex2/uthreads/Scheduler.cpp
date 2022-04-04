@@ -36,17 +36,6 @@ void Scheduler::setTimer(int quantum){
 
 void Scheduler::switchThread(int sig)
 {
-//	if(sig == SIGVTALRM){
-//		int prevTimeId = queue.front();
-//		uthread_block(prevTimeId); // why?
-//		queue.push(prevTimeId);
-//	}
-//
-//	queue.pop();
-//	currentThread = queue.front();
-//	uthread_resume(currentThread);
-
-    // TODO handle what happens when a thread is sleeping, to send SIGVTALRM ?
 	Thread *prevThread = ThreadManager::getThreadById(s_currentThreadId); // the running thread time is up
 	int retValue = sigsetjmp(prevThread->env, 1);
 	bool switchThread = retValue == 0;
@@ -76,8 +65,7 @@ void Scheduler::switchThread(int sig)
 	}
 }
 
-int Scheduler::addThreadToReady(int id)
-{
+int Scheduler::addThreadToReadyQueue(int id){
     Thread *targetThread = ThreadManager::getThreadById(id);
     if(targetThread->getState() != READY){
         targetThread->setState(READY);
@@ -85,16 +73,14 @@ int Scheduler::addThreadToReady(int id)
 	s_readyThreads.push_back(id);
 }
 
-void Scheduler::startTimer() {
-
+void Scheduler::startTimer(){
     if (setitimer(ITIMER_VIRTUAL, &timer, NULL))
 	{
 		std::cout << "setitimer error."; // TODO check if to print
 	}
 }
 
-Thread *Scheduler::getNextReadyThread()
-{
+Thread *Scheduler::getNextReadyThread(){
 	if(s_readyThreads.empty())
 	{
 		return nullptr;
@@ -123,7 +109,6 @@ int Scheduler::getTotalQuantums() {
 }
 
 int Scheduler::addThreadToSleep(int id, int numQuantums) {
-
     s_sleepingThreads.emplace_back(id, numQuantums + 1); // TODO check if numQuantums +1 needed
 }
 
@@ -135,7 +120,7 @@ void Scheduler::manageSleepThreads(){
 		if(it->second == 0) {
 			it = s_sleepingThreads.erase(it);
 			if(ThreadManager::getThreadById(it->first)->getState() == READY){
-				Scheduler::addThreadToReady(it->first);
+				Scheduler::addThreadToReadyQueue(it->first);
 			}
 		}
 		else ++it;

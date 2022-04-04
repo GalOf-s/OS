@@ -24,9 +24,8 @@ Thread *ThreadManager::getThreadById(int id)
 
 int ThreadManager::_generateNewThreadId()
 {
-	if (s_minFreeId == FAILURE){
-		return FAILURE;
-	}
+	ThreadManager::deleteTerminatedThreads();
+
 	int curMinFreeId = s_minFreeId;
 	for (int i = s_minFreeId + 1; i < _maxThreadsNum; i++){
 		if (s_threads[i] == nullptr){
@@ -34,7 +33,7 @@ int ThreadManager::_generateNewThreadId()
 		}
 	}
 	if(s_minFreeId == curMinFreeId){
-		s_minFreeId=1;
+		s_minFreeId=FAILURE;
 	}
 
 	return curMinFreeId;
@@ -81,10 +80,25 @@ void ThreadManager::ThreadManager_destruct() {
 
 void ThreadManager::terminate(int threadId) { // TODO: can be a method of Thread?
     Thread* targetThread = s_threads[threadId];
-    if(targetThread->getState() == READY){
-        Scheduler::removeThreadFromReady(threadId); // removes thread from ready queue
-    }
-    ThreadManager::_deleteThread(threadId);
+	if (targetThread->getState() == RUNNING){
+		targetThread->setState(TERMINATED);
+		Scheduler::switchThread(SIGUSR1);
+	}else if(targetThread->getState() == READY)
+	{
+		Scheduler::removeThreadFromReady(threadId); // removes thread from ready queue
+	}
+	ThreadManager::_deleteThread(threadId);
+
+}
+
+void ThreadManager::deleteTerminatedThreads()
+{
+	for(int i=0; i<_maxThreadsNum; i++){
+		if(s_threads[i]->getState() == TERMINATED)
+		{
+			ThreadManager::_deleteThread(i);
+		}
+	}
 }
 
 
