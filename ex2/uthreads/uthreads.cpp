@@ -38,7 +38,7 @@ int uthread_terminate(int tid)
 	if(tid == MAIN_THREAD_ID){
         // TODO check in the furom if the only way to exit the program is when terminate(0), if not, the memory wont free
         ThreadManager::ThreadManager_destruct();
-		exit(SUCCESS);
+		exit(EXIT_SUCCESS);
 	}
 
     ThreadManager::terminate(tid);
@@ -47,12 +47,20 @@ int uthread_terminate(int tid)
 
 int uthread_block(int tid)
 {
-	return ThreadManager::blockThread(tid);
+    if (ThreadManager::validateThreadId(tid) == FAILURE){
+        return FAILURE; // TODO print something?
+    }
+	ThreadManager::blockThread(tid);
+    return SUCCESS;
 }
 
 int uthread_resume(int tid)
 {
-	return ThreadManager::resumeThread(tid);
+    if (ThreadManager::validateThreadId(tid) == FAILURE){
+        return FAILURE; // TODO print something?
+    }
+	ThreadManager::resumeThread(tid);
+    return SUCCESS;
 }
 
 int uthread_sleep(int num_quantums)
@@ -62,7 +70,7 @@ int uthread_sleep(int num_quantums)
 		std::cerr << "thread library error: unable to put the main thread to sleep\n";
 		return FAILURE;
 	}
-    Scheduler::addThreadToSleep(currentThreadId, num_quantums);
+    ThreadManager::sleepThread(num_quantums);
 	return SUCCESS;
 }
 

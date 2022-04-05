@@ -117,8 +117,8 @@ int Scheduler::getTotalQuantums() {
     return s_totalQuantums;
 }
 
-int Scheduler::addThreadToSleep(int id, int numQuantums) {
-    s_sleepingThreads.emplace_back(id, numQuantums + 1); // TODO check if numQuantums +1 needed
+int Scheduler::addThreadToSleep(int numQuantums) {
+    s_sleepingThreads.emplace_back(s_currentThreadId, numQuantums + 1); // TODO check if numQuantums +1 needed
 }
 
 void Scheduler::_manageSleepThreads(){

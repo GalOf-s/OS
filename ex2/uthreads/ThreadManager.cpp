@@ -102,31 +102,27 @@ void ThreadManager::deleteTerminatedThreads()
 	}
 }
 
-int ThreadManager::blockThread(int id){
-	if (ThreadManager::validateThreadId(id) == FAILURE){
-		return FAILURE; // TODO print something?
-	}
-	if(s_threads[id]->getState() == RUNNING){
+void ThreadManager::blockThread(int id){
+	if (s_threads[id]->getState() == RUNNING){
 		s_threads[id]->setState(BLOCKED);
 		Scheduler::switchThread(SIGUSR1);
-		return SUCCESS;
-	}else{
+	} else {
 		Scheduler::removeThreadFromReady(id);
-		return SUCCESS;
 	}
 }
 
-int ThreadManager::resumeThread(int id)
+void ThreadManager::resumeThread(int id)
 {
-	if (ThreadManager::validateThreadId(id) == FAILURE){
-		return FAILURE;
-	}
 	Thread* targetThread = ThreadManager::getThreadById(id);
 	if (targetThread->getState() == BLOCKED){
 		targetThread->setState(READY);
 		Scheduler::addThreadToReadyQueue(id);
 	}
 	Scheduler::addThreadToReadyQueue(id);
-	return SUCCESS;
+}
+
+void ThreadManager::sleepThread(int numQuantums){
+    Scheduler::addThreadToSleep( numQuantums);
+    Scheduler::switchThread(SIGUSR1);
 }
 

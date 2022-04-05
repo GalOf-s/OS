@@ -19,8 +19,9 @@ public:
     static void ThreadManager_destruct();
     static void terminate(int threadId);
 	static void deleteTerminatedThreads();
-	static int blockThread(int id);
-	static int resumeThread(int id);
+	static void blockThread(int id);
+	static void resumeThread(int id);
+    static void sleepThread(int numQuantums)
 
 private:
 	static std::vector<Thread*> s_threads;

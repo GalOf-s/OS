@@ -73,9 +73,6 @@ private:
     State _state{};
     char *_stack{};
 	int _quantumCounter{};
-
-
-
 };
 
 
