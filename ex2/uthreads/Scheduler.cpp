@@ -36,10 +36,12 @@ void Scheduler::setTimer(int quantum){
 
 void Scheduler::switchThread(int sig)
 {
-    if(s_currentThreadId != NO_ID && sig == SIGVTALRM){ // if a tread didn't get terminated or blocked while running
+    if(s_currentThreadId != NO_ID){ // if a tread didn't get terminated while running
         Thread *prevThread = ThreadManager::getThreadById(s_currentThreadId); // the running thread time is up
-        prevThread->setState(READY); // change the running thread state to ready
-        s_readyThreads.push_back(s_currentThreadId); // push the current running thread to the back of the queue
+        if(sig == SIGVTALRM){ // if a tread didn't get blocked while running
+            prevThread->setState(READY); // change the running thread state to ready
+            s_readyThreads.push_back(s_currentThreadId); // push the current running thread to the back of the queue
+        }
         int retValue = sigsetjmp(prevThread->env, 1);
         if(retValue == 1){
             return;
