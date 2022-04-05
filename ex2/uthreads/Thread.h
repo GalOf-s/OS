@@ -12,7 +12,7 @@ typedef unsigned long address_t;
 
 /* A translation is required when using an address of a variable.
    Use this as a black box in your code. */
-address_t translate_address(address_t addr)
+address_t _translate_address(address_t addr)
 {
     address_t ret;
     asm volatile("xor    %%fs:0x30,%0\n"
@@ -56,7 +56,7 @@ enum State{
 class Thread
 {
 public:
-    sigjmp_buf env[2];
+    sigjmp_buf env;
 
     explicit Thread(int id, thread_entry_point entryPoint);
     explicit Thread();
@@ -68,13 +68,11 @@ public:
     void incQuantumCounter();
 	int getId() const{return _id;};
 	int getQuantumsCount() const{return _quantumCounter;};
-    int sleep();
 private:
     int _id{};
     State _state{};
     char *_stack{};
 	int _quantumCounter{};
-    static address_t _translate_address(address_t addr);
 
 
 

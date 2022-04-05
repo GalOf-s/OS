@@ -9,6 +9,7 @@
 
 
 #define MIC_TO_SEC 1000000
+#define NO_ID -1
 
 class Scheduler
 {
@@ -32,6 +33,8 @@ public:
 
     static void removeThreadFromReady(int id);
 
+    static void setNoRunningThread();
+
 private:
     static int s_currentThreadId;
     static int s_totalQuantums;
@@ -41,7 +44,7 @@ private:
 	static Thread* getNextReadyThread();
 
 
-    static void manageSleepThreads();
+    static void _manageSleepThreads();
 };
 
 

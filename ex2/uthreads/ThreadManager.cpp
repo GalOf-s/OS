@@ -81,13 +81,14 @@ void ThreadManager::ThreadManager_destruct() {
 void ThreadManager::terminate(int threadId) { // TODO: can be a method of Thread?
     Thread* targetThread = s_threads[threadId];
 	if (targetThread->getState() == RUNNING){
-		targetThread->setState(TERMINATED);
-		Scheduler::switchThread(SIGUSR1);
+//		targetThread->setState(TERMINATED);
+        ThreadManager::_deleteThread(threadId);
+        Scheduler::setNoRunningThread();
+        Scheduler::switchThread(SIGUSR1);
 	}else if(targetThread->getState() == READY)
 	{
 		Scheduler::removeThreadFromReady(threadId); // removes thread from ready queue
 	}
-	ThreadManager::_deleteThread(threadId);
 
 }
 

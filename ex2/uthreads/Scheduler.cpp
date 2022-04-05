@@ -36,11 +36,20 @@ void Scheduler::setTimer(int quantum){
 
 void Scheduler::switchThread(int sig)
 {
-	Thread *prevThread = ThreadManager::getThreadById(s_currentThreadId); // the running thread time is up
-	int retValue = sigsetjmp(prevThread->env, 1);
-	bool switchThread = retValue == 0;
-	if (switchThread){
-		Thread *currentThread = getNextReadyThread();
+    if(s_currentThreadId != NO_ID && sig == SIGVTALRM){ // if a tread didn't get terminated or blocked while running
+        Thread *prevThread = ThreadManager::getThreadById(s_currentThreadId); // the running thread time is up
+        prevThread->setState(READY); // change the running thread state to ready
+        s_readyThreads.push_back(s_currentThreadId); // push the current running thread to the back of the queue
+        int retValue = sigsetjmp(prevThread->env, 1);
+        if(retValue == 1){
+            return;
+        }
+    }
+//	Thread *prevThread = ThreadManager::getThreadById(s_currentThreadId); // the running thread time is up
+//	int retValue = sigsetjmp(prevThread->env, 1);
+//	bool switchThread = retValue == 0;
+//	if (switchThread){
+		Thread *currentThread = getNextReadyThread(); // TODO do we need this function here?
 
 		if (currentThread == nullptr) {
 			// TODO check what to do if the queue is empty when times up, then no one is ready so the main thread with keep running (?)
@@ -51,18 +60,16 @@ void Scheduler::switchThread(int sig)
 		currentThread->setState(RUNNING);
 		currentThread->incQuantumCounter();
 		s_totalQuantums++;
-		manageSleepThreads();
+		_manageSleepThreads();
 
-
-		startTimer(); // starts the timer and jumps to run the thread
-		if (sig == SIGVTALRM){ // alarm turned on so switch to the next thread in line
-			prevThread->setState(READY); // change the running thread state to ready
-			s_readyThreads.push_back(s_currentThreadId); // push the current running thread to the back of the queue
-
-
-		}
-		siglongjmp(currentThread->env, 1);
-	}
+//
+//		if (sig == SIGVTALRM){ // alarm turned on so switch to the next thread in line
+//			prevThread->setState(READY); // change the running thread state to ready
+//			s_readyThreads.push_back(s_currentThreadId); // push the current running thread to the back of the queue
+//		}
+        startTimer(); // starts the timer and jumps to run the thread
+        siglongjmp(currentThread->env, 1);
+//	}
 }
 
 int Scheduler::addThreadToReadyQueue(int id){
@@ -112,7 +119,7 @@ int Scheduler::addThreadToSleep(int id, int numQuantums) {
     s_sleepingThreads.emplace_back(id, numQuantums + 1); // TODO check if numQuantums +1 needed
 }
 
-void Scheduler::manageSleepThreads(){
+void Scheduler::_manageSleepThreads(){
 	auto it = s_sleepingThreads.begin();
 
 	while(it != s_sleepingThreads.end()) {
@@ -125,5 +132,9 @@ void Scheduler::manageSleepThreads(){
 		}
 		else ++it;
 	}
+}
+
+void Scheduler::setNoRunningThread() {
+    s_currentThreadId = NO_ID;
 }
 

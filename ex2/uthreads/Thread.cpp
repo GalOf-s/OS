@@ -2,13 +2,13 @@
 #include "Scheduler.h"
 
 
-sigjmp_buf env[2];
 
 Thread::Thread() {
     _id = 0;
-    _state = RUNNING;
     _quantumCounter = 1;
 
+    sigsetjmp(env, 1);
+    sigemptyset(&env->__saved_mask);
 }
 
 Thread::Thread(int id, thread_entry_point entryPoint) {
@@ -37,9 +37,4 @@ void Thread::incQuantumCounter() {
 Thread::~Thread()
 {
 	delete[] _stack;
-}
-
-int Thread::sleep() {
-    return 0;
-
 }
