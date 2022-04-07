@@ -4,14 +4,17 @@
 #include "Scheduler.h"
 
 
+std::vector<Thread*> ThreadManager::s_threads;
+int ThreadManager::s_minFreeId;
+int ThreadManager::_maxThreadsNum;
+
 void ThreadManager::ThreadManager_init(int maxThreadsNum) {
     _maxThreadsNum = maxThreadsNum;
     s_minFreeId = 1;
     s_threads = std::vector<Thread*>(maxThreadsNum, nullptr);
     Thread *mainThread = new Thread();
     if(mainThread == nullptr){
-        std::cerr << "system error: failed to allocate memory\n";
-        exit(EXIT_FAILURE);
+        _systemError(MEMORY_ALLOCATION_ERROR);
     }
     s_threads[MAIN_THREAD_ID] = mainThread; // creates main thread
 }
@@ -24,7 +27,7 @@ Thread *ThreadManager::getThreadById(int id)
 
 int ThreadManager::_generateNewThreadId()
 {
-	ThreadManager::deleteTerminatedThreads();
+	//ThreadManager::deleteTerminatedThreads();
 
 	int curMinFreeId = s_minFreeId;
 	for (int i = s_minFreeId + 1; i < _maxThreadsNum; i++){
@@ -33,7 +36,7 @@ int ThreadManager::_generateNewThreadId()
 		}
 	}
 	if(s_minFreeId == curMinFreeId){
-		s_minFreeId=FAILURE;
+		s_minFreeId = FAILURE;
 	}
 
 	return curMinFreeId;
@@ -45,10 +48,9 @@ int ThreadManager::addNewThread(thread_entry_point entry_point)
     if(id == FAILURE){
         return FAILURE;
     }
-    Thread *newThread = new Thread(id, entry_point);
+    auto *newThread = new Thread(id, entry_point);
     if(newThread == nullptr){
-        std::cerr << "system error: failed to allocate memory\n";
-        exit(EXIT_FAILURE);
+        _systemError(MEMORY_ALLOCATION_ERROR);
     }
     s_threads[id] = newThread;
     return id;
@@ -78,7 +80,7 @@ void ThreadManager::ThreadManager_destruct() {
     }
 }
 
-void ThreadManager::terminate(int threadId) { // TODO: can be a method of Thread?
+void ThreadManager::terminate(int threadId) {
     Thread* targetThread = s_threads[threadId];
 	if (targetThread->getState() == RUNNING){
 //		targetThread->setState(TERMINATED);
@@ -89,18 +91,17 @@ void ThreadManager::terminate(int threadId) { // TODO: can be a method of Thread
 	{
 		Scheduler::removeThreadFromReady(threadId); // removes thread from ready queue
 	}
-
 }
 
-void ThreadManager::deleteTerminatedThreads()
-{
-	for(int i=0; i<_maxThreadsNum; i++){
-		if(s_threads[i]->getState() == TERMINATED)
-		{
-			ThreadManager::_deleteThread(i);
-		}
-	}
-}
+//void ThreadManager::deleteTerminatedThreads()
+//{
+//	for(int i=0; i<_maxThreadsNum; i++){
+//		if(s_threads[i]->getState() == TERMINATED)
+//		{
+//			ThreadManager::_deleteThread(i);
+//		}
+//	}
+//}
 
 void ThreadManager::blockThread(int id){
 	if (s_threads[id]->getState() == RUNNING){
@@ -122,7 +123,11 @@ void ThreadManager::resumeThread(int id)
 }
 
 void ThreadManager::sleepThread(int numQuantums){
-    Scheduler::addThreadToSleep( numQuantums);
+    Scheduler::addThreadToSleep(numQuantums);
     Scheduler::switchThread(SIGUSR1);
 }
 
+void ThreadManager::_systemError(const std::string &string) {
+    std::cerr << SYSTEM_ERROR + string << std::endl;
+    exit(EXIT_FAILURE);
+}

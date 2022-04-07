@@ -5,6 +5,11 @@
 #include "ThreadManager.h"
 
 
+int Scheduler::s_currentThreadId;
+int Scheduler::s_totalQuantums;
+std::vector<int> Scheduler::s_readyThreads;
+std::vector <std::pair<int, int>> Scheduler::s_sleepingThreads;
+struct itimerval Scheduler::timer;
 
 void Scheduler::Scheduler_init(int quantum) {
 	s_totalQuantums = 1;
@@ -15,14 +20,19 @@ void Scheduler::Scheduler_init(int quantum) {
 
 
 void Scheduler::setTimer(int quantum){
+    if (sigemptyset(&timerSet) < 0) {
+        _systemError(SIGEMPTYSET_ERROR);
+    }
+    if (sigaddset(&timerSet, SIGVTALRM) < 0) {
+        _systemError(SIGADDSET_ERROR);
+    }
 
     struct sigaction sa = {0};
-
 
     sa.sa_handler = &Scheduler::switchThread;
     if (sigaction(SIGVTALRM, &sa, NULL) < 0)
     {
-        printf("sigaction error."); // TODO check if a message should be printed
+        _systemError(SIGACTION_ERROR);
     }
 	timer.it_value.tv_sec = 0;        // first time interval, seconds part
 	timer.it_value.tv_usec = 0;        // first time interval, microseconds part
@@ -31,7 +41,7 @@ void Scheduler::setTimer(int quantum){
 	timer.it_interval.tv_sec = quantum / MIC_TO_SEC;    // following time intervals seconds part
 	timer.it_interval.tv_usec = quantum % MIC_TO_SEC;    // following time intervals, microseconds part
 
-    startTimer();
+    _startTimer();
 }
 
 void Scheduler::switchThread(int sig)
@@ -51,30 +61,29 @@ void Scheduler::switchThread(int sig)
 //	int retValue = sigsetjmp(prevThread->env, 1);
 //	bool switchThread = retValue == 0;
 //	if (switchThread){
-		Thread *currentThread = getNextReadyThread(); // TODO do we need this function here?
+    Thread *currentThread = getNextReadyThread(); // TODO do we need this function here?
 
-		if (currentThread == nullptr) {
-			// TODO check what to do if the queue is empty when times up, then no one is ready so the main thread with keep running (?)
-			currentThread = ThreadManager::getThreadById(MAIN_THREAD_ID);
-		}
+    if (currentThread == nullptr) {
+        currentThread = ThreadManager::getThreadById(MAIN_THREAD_ID);
+    }
 
-		s_currentThreadId = currentThread->getId(); // set current running thread to next in line
-		currentThread->setState(RUNNING);
-		currentThread->incQuantumCounter();
-		s_totalQuantums++;
-		_manageSleepThreads();
+    s_currentThreadId = currentThread->getId(); // set current running thread to next in line
+    currentThread->setState(RUNNING);
+    currentThread->incQuantumCounter();
+    s_totalQuantums++;
+    _manageSleepThreads();
 
 //
 //		if (sig == SIGVTALRM){ // alarm turned on so switch to the next thread in line
 //			prevThread->setState(READY); // change the running thread state to ready
 //			s_readyThreads.push_back(s_currentThreadId); // push the current running thread to the back of the queue
 //		}
-        startTimer(); // starts the timer and jumps to run the thread
-        siglongjmp(currentThread->env, 1);
+    _startTimer(); // starts the timer and jumps to run the thread
+    siglongjmp(currentThread->env, 1);
 //	}
 }
 
-int Scheduler::addThreadToReadyQueue(int id){
+void Scheduler::addThreadToReadyQueue(int id){
     Thread *targetThread = ThreadManager::getThreadById(id);
     if(targetThread->getState() != READY){
         targetThread->setState(READY);
@@ -82,10 +91,11 @@ int Scheduler::addThreadToReadyQueue(int id){
 	s_readyThreads.push_back(id);
 }
 
-void Scheduler::startTimer(){
+void Scheduler::_startTimer(){
     if (setitimer(ITIMER_VIRTUAL, &timer, NULL))
 	{
-		std::cout << "setitimer error."; // TODO check if to print
+        ThreadManager::ThreadManager_destruct();
+        _systemError(SETITIMER_ERROR);
 	}
 }
 
@@ -117,7 +127,8 @@ int Scheduler::getTotalQuantums() {
     return s_totalQuantums;
 }
 
-int Scheduler::addThreadToSleep(int numQuantums) {
+void Scheduler::addThreadToSleep(int numQuantums) {
+    // TODO if a thread is already sleeping, then to find him and add the numQuantum to the current?
     s_sleepingThreads.emplace_back(s_currentThreadId, numQuantums + 1); // TODO check if numQuantums +1 needed
 }
 
@@ -139,4 +150,27 @@ void Scheduler::_manageSleepThreads(){
 void Scheduler::setNoRunningThread() {
     s_currentThreadId = NO_ID;
 }
+
+sigset_t &Scheduler::getTimerSet() {
+    return timerSet;
+}
+
+void Scheduler::blockTimerSig() {
+    if (sigprocmask(SIG_BLOCK, &Scheduler::getTimerSet(), NULL) < 0) {
+        ThreadManager::ThreadManager_destruct();
+        _systemError(SIGPROCMASK_ERROR);
+    }
+}
+
+void Scheduler::unblockTimerSig() {
+    if (sigprocmask(SIG_UNBLOCK, &Scheduler::getTimerSet(), nullptr) < 0) {
+        ThreadManager::ThreadManager_destruct();
+        _systemError((std::string &) SIGPROCMASK_ERROR);
+    }
+}
+
+void Scheduler::_systemError(const std::string &str) {
+
+}
+
 
