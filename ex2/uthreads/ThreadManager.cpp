@@ -6,10 +6,10 @@
 
 std::vector<Thread*> ThreadManager::s_threads;
 int ThreadManager::s_minFreeId;
-int ThreadManager::_maxThreadsNum;
+int ThreadManager::s_maxThreadsNum;
 
 void ThreadManager::ThreadManager_init(int maxThreadsNum) {
-    _maxThreadsNum = maxThreadsNum;
+    s_maxThreadsNum = maxThreadsNum;
     s_minFreeId = 1;
     s_threads = std::vector<Thread*>(maxThreadsNum, nullptr);
     Thread *mainThread = new Thread();
@@ -30,9 +30,10 @@ int ThreadManager::_generateNewThreadId()
 	//ThreadManager::deleteTerminatedThreads();
 
 	int curMinFreeId = s_minFreeId;
-	for (int i = s_minFreeId + 1; i < _maxThreadsNum; i++){
+	for (int i = s_minFreeId + 1; i < s_maxThreadsNum; i++){
 		if (s_threads[i] == nullptr){
 			s_minFreeId = i;
+            break;
 		}
 	}
 	if(s_minFreeId == curMinFreeId){
@@ -71,6 +72,9 @@ void ThreadManager::_deleteThread(int id)
 {
     delete s_threads[id];
     s_threads[id] = nullptr;
+    if(id < s_minFreeId){
+        s_minFreeId = id;
+    }
 }
 
 void ThreadManager::ThreadManager_destruct() {
@@ -91,11 +95,12 @@ void ThreadManager::terminate(int threadId) {
 	{
 		Scheduler::removeThreadFromReady(threadId); // removes thread from ready queue
 	}
+    ThreadManager::_deleteThread(threadId);
 }
 
 //void ThreadManager::deleteTerminatedThreads()
 //{
-//	for(int i=0; i<_maxThreadsNum; i++){
+//	for(int i=0; i<s_maxThreadsNum; i++){
 //		if(s_threads[i]->getState() == TERMINATED)
 //		{
 //			ThreadManager::_deleteThread(i);
@@ -108,6 +113,7 @@ void ThreadManager::blockThread(int id){
 		s_threads[id]->setState(BLOCKED);
 		Scheduler::switchThread(SIGUSR1);
 	} else {
+        s_threads[id]->setState(BLOCKED);
 		Scheduler::removeThreadFromReady(id);
 	}
 }
@@ -119,7 +125,6 @@ void ThreadManager::resumeThread(int id)
 		targetThread->setState(READY);
 		Scheduler::addThreadToReadyQueue(id);
 	}
-	Scheduler::addThreadToReadyQueue(id);
 }
 
 void ThreadManager::sleepThread(int numQuantums){

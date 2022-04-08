@@ -44,7 +44,7 @@ int uthread_spawn(thread_entry_point entry_point)
     }
 	Scheduler::addThreadToReadyQueue(newThreadId);
     Scheduler::unblockTimerSig();
-	return SUCCESS;
+	return newThreadId;
 }
 
 int uthread_terminate(int tid)

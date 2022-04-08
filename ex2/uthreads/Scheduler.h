@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <vector>
 #include <algorithm>
+#include <csignal>
 #include "ThreadManager.h"
 
 

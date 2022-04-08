@@ -201,6 +201,30 @@ ThreadManager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/ThreadManager.cpp.s
 .PHONY : ThreadManager.cpp.s
 
+test7_no_out_different.o: test7_no_out_different.cpp.o
+.PHONY : test7_no_out_different.o
+
+# target to build an object file
+test7_no_out_different.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/test7_no_out_different.cpp.o
+.PHONY : test7_no_out_different.cpp.o
+
+test7_no_out_different.i: test7_no_out_different.cpp.i
+.PHONY : test7_no_out_different.i
+
+# target to preprocess a source file
+test7_no_out_different.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/test7_no_out_different.cpp.i
+.PHONY : test7_no_out_different.cpp.i
+
+test7_no_out_different.s: test7_no_out_different.cpp.s
+.PHONY : test7_no_out_different.s
+
+# target to generate assembly for a file
+test7_no_out_different.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/test7_no_out_different.cpp.s
+.PHONY : test7_no_out_different.cpp.s
+
 uthreads.o: uthreads.cpp.o
 .PHONY : uthreads.o
 
@@ -243,6 +267,9 @@ help:
 	@echo "... ThreadManager.o"
 	@echo "... ThreadManager.i"
 	@echo "... ThreadManager.s"
+	@echo "... test7_no_out_different.o"
+	@echo "... test7_no_out_different.i"
+	@echo "... test7_no_out_different.s"
 	@echo "... uthreads.o"
 	@echo "... uthreads.i"
 	@echo "... uthreads.s"

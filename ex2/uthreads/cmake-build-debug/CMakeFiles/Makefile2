@@ -81,12 +81,12 @@ clean: CMakeFiles/uthreads.dir/clean
 CMakeFiles/uthreads.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/CMakeFiles --progress-num=1,2,3,4,5 "Built target uthreads"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/CMakeFiles --progress-num=1,2,3,4,5,6 "Built target uthreads"
 .PHONY : CMakeFiles/uthreads.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/uthreads.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/CMakeFiles 6
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/uthreads.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/CMakeFiles 0
 .PHONY : CMakeFiles/uthreads.dir/rule

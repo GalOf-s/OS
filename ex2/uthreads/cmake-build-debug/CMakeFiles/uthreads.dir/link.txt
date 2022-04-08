@@ -1,2 +1,1 @@
-/usr/bin/ar qc libuthreads.a CMakeFiles/uthreads.dir/uthreads.cpp.o CMakeFiles/uthreads.dir/Scheduler.cpp.o CMakeFiles/uthreads.dir/Thread.cpp.o CMakeFiles/uthreads.dir/ThreadManager.cpp.o
-/usr/bin/ranlib libuthreads.a
+/usr/bin/c++ -g CMakeFiles/uthreads.dir/uthreads.cpp.o CMakeFiles/uthreads.dir/Scheduler.cpp.o CMakeFiles/uthreads.dir/Thread.cpp.o CMakeFiles/uthreads.dir/ThreadManager.cpp.o CMakeFiles/uthreads.dir/test7_no_out_different.cpp.o -o uthreads 

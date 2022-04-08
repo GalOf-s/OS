@@ -10,6 +10,8 @@ int Scheduler::s_totalQuantums;
 std::vector<int> Scheduler::s_readyThreads;
 std::vector <std::pair<int, int>> Scheduler::s_sleepingThreads;
 struct itimerval Scheduler::timer;
+sigset_t Scheduler::timerSet;
+
 
 void Scheduler::Scheduler_init(int quantum) {
 	s_totalQuantums = 1;
@@ -34,12 +36,12 @@ void Scheduler::setTimer(int quantum){
     {
         _systemError(SIGACTION_ERROR);
     }
-	timer.it_value.tv_sec = 0;        // first time interval, seconds part
-	timer.it_value.tv_usec = 0;        // first time interval, microseconds part
+	timer.it_value.tv_sec = quantum / MIC_TO_SEC;        // first time interval, seconds part
+	timer.it_value.tv_usec = quantum % MIC_TO_SEC;        // first time interval, microseconds part
 
 	// configure the timer to expire every 3 sec after that.
-	timer.it_interval.tv_sec = quantum / MIC_TO_SEC;    // following time intervals seconds part
-	timer.it_interval.tv_usec = quantum % MIC_TO_SEC;    // following time intervals, microseconds part
+	timer.it_interval.tv_sec = 0;    // following time intervals seconds part
+	timer.it_interval.tv_usec = 0;    // following time intervals, microseconds part
 
     _startTimer();
 }
@@ -128,7 +130,6 @@ int Scheduler::getTotalQuantums() {
 }
 
 void Scheduler::addThreadToSleep(int numQuantums) {
-    // TODO if a thread is already sleeping, then to find him and add the numQuantum to the current?
     s_sleepingThreads.emplace_back(s_currentThreadId, numQuantums + 1); // TODO check if numQuantums +1 needed
 }
 
@@ -156,21 +157,22 @@ sigset_t &Scheduler::getTimerSet() {
 }
 
 void Scheduler::blockTimerSig() {
-    if (sigprocmask(SIG_BLOCK, &Scheduler::getTimerSet(), NULL) < 0) {
+    if (sigprocmask(SIG_BLOCK, &timerSet, NULL) < 0) {
         ThreadManager::ThreadManager_destruct();
         _systemError(SIGPROCMASK_ERROR);
     }
 }
 
 void Scheduler::unblockTimerSig() {
-    if (sigprocmask(SIG_UNBLOCK, &Scheduler::getTimerSet(), nullptr) < 0) {
+    if (sigprocmask(SIG_UNBLOCK, &timerSet, nullptr) < 0) {
         ThreadManager::ThreadManager_destruct();
         _systemError((std::string &) SIGPROCMASK_ERROR);
     }
 }
 
-void Scheduler::_systemError(const std::string &str) {
-
+void Scheduler::_systemError(const std::string &string) {
+    std::cerr << SYSTEM_ERROR + string << std::endl;
+    exit(EXIT_FAILURE);
 }
 
 

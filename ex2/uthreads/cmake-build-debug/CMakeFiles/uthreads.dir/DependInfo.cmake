@@ -11,6 +11,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/Scheduler.cpp" "CMakeFiles/uthreads.dir/Scheduler.cpp.o" "gcc" "CMakeFiles/uthreads.dir/Scheduler.cpp.o.d"
   "/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/Thread.cpp" "CMakeFiles/uthreads.dir/Thread.cpp.o" "gcc" "CMakeFiles/uthreads.dir/Thread.cpp.o.d"
   "/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/ThreadManager.cpp" "CMakeFiles/uthreads.dir/ThreadManager.cpp.o" "gcc" "CMakeFiles/uthreads.dir/ThreadManager.cpp.o.d"
+  "/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/test7_no_out_different.cpp" "CMakeFiles/uthreads.dir/test7_no_out_different.cpp.o" "gcc" "CMakeFiles/uthreads.dir/test7_no_out_different.cpp.o.d"
   "/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/uthreads.cpp" "CMakeFiles/uthreads.dir/uthreads.cpp.o" "gcc" "CMakeFiles/uthreads.dir/uthreads.cpp.o.d"
   )
 

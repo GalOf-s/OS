@@ -38,10 +38,10 @@
 				</MakeCommands>
 			</Target>
 			<Target title="uthreads">
-				<Option output="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/libuthreads.a" prefix_auto="0" extension_auto="0"/>
+				<Option output="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/uthreads" prefix_auto="0" extension_auto="0"/>
 				<Option working_dir="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug"/>
 				<Option object_output="./"/>
-				<Option type="2"/>
+				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
 					<Add directory="/usr/include/c++/9"/>
@@ -60,10 +60,10 @@
 				</MakeCommands>
 			</Target>
 			<Target title="uthreads/fast">
-				<Option output="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/libuthreads.a" prefix_auto="0" extension_auto="0"/>
+				<Option output="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/uthreads" prefix_auto="0" extension_auto="0"/>
 				<Option working_dir="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug"/>
 				<Option object_output="./"/>
-				<Option type="2"/>
+				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
 					<Add directory="/usr/include/c++/9"/>
@@ -98,6 +98,9 @@
 			<Option target="uthreads"/>
 		</Unit>
 		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/ThreadManager.h">
+			<Option target="uthreads"/>
+		</Unit>
+		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/test7_no_out_different.cpp">
 			<Option target="uthreads"/>
 		</Unit>
 		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/uthreads.cpp">

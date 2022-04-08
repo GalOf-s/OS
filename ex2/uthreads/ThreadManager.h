@@ -2,6 +2,7 @@
 #define UTHREADS_THREADMANAGER_H
 
 #include <vector>
+#include <string>
 #include "Thread.h"
 
 #define SUCCESS 0
@@ -30,7 +31,7 @@ public:
 private:
 	static std::vector<Thread*> s_threads;
 	static int s_minFreeId;
-	static int _maxThreadsNum;
+	static int s_maxThreadsNum;
 
     static int _generateNewThreadId();
     static void _deleteThread(int id);
