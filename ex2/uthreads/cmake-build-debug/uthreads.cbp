@@ -100,7 +100,7 @@
 		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/ThreadManager.h">
 			<Option target="uthreads"/>
 		</Unit>
-		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/test7_no_out_different.cpp">
+		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/main.cpp">
 			<Option target="uthreads"/>
 		</Unit>
 		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/uthreads.cpp">

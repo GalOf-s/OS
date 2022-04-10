@@ -6,4 +6,4 @@ set(CMAKE_CXX_STANDARD 14)
 #add_library(uthreads uthreads.cpp uthreads.h Scheduler.cpp Scheduler.h Thread.cpp Thread.h
 #        ThreadManager.cpp ThreadManager.h)
 
-add_executable(uthreads uthreads.cpp uthreads.h Scheduler.cpp Scheduler.h Thread.cpp Thread.h  ThreadManager.cpp ThreadManager.h test7_no_out_different.cpp)
+add_executable(uthreads uthreads.cpp uthreads.h Scheduler.cpp Scheduler.h Thread.cpp Thread.h  ThreadManager.cpp ThreadManager.h main.cpp)

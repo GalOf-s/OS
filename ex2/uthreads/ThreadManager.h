@@ -26,7 +26,7 @@ public:
 	//static void deleteTerminatedThreads();
 	static void blockThread(int id);
 	static void resumeThread(int id);
-    static void sleepThread(int numQuantums);
+    static void sleepThread(int id, int numQuantums);
 
 private:
 	static std::vector<Thread*> s_threads;

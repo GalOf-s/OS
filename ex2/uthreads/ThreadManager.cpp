@@ -127,7 +127,8 @@ void ThreadManager::resumeThread(int id)
 	}
 }
 
-void ThreadManager::sleepThread(int numQuantums){
+void ThreadManager::sleepThread(int id, int numQuantums){
+    ThreadManager::getThreadById(id)->setState(READY);
     Scheduler::addThreadToSleep(numQuantums);
     Scheduler::switchThread(SIGUSR1);
 }
