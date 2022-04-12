@@ -16,6 +16,12 @@
 #define ILLEGAL_SLEEP_ERROR "unable to put the main thread tp sleep."
 
 
+/**
+ * Prints a library error message to stderr.
+ *
+ * @param string A string to print.
+ * @return FAILURE.
+ */
 int threadLibraryError(const std::string &string) {
     std::cerr << THREAD_LIBRARY_ERROR + string << std::endl;
     Scheduler::unblockTimerSig();
@@ -58,7 +64,7 @@ int uthread_terminate(int tid)
         ThreadManager::ThreadManager_destruct();
 		exit(EXIT_SUCCESS);
 	}
-    ThreadManager::terminate(tid);
+    ThreadManager::terminateThread(tid);
     Scheduler::unblockTimerSig();
     return SUCCESS;
 }

@@ -1,1 +1,1 @@
-/usr/bin/c++ -g CMakeFiles/uthreads.dir/uthreads.cpp.o CMakeFiles/uthreads.dir/Scheduler.cpp.o CMakeFiles/uthreads.dir/Thread.cpp.o CMakeFiles/uthreads.dir/ThreadManager.cpp.o CMakeFiles/uthreads.dir/main.cpp.o -o uthreads 
+/usr/bin/c++ -g CMakeFiles/uthreads.dir/uthreads.cpp.o CMakeFiles/uthreads.dir/Scheduler.cpp.o CMakeFiles/uthreads.dir/Thread.cpp.o CMakeFiles/uthreads.dir/ThreadManager.cpp.o CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o -o uthreads 

@@ -27,12 +27,10 @@ Thread *ThreadManager::getThreadById(int id)
 
 int ThreadManager::_generateNewThreadId()
 {
-	//ThreadManager::deleteTerminatedThreads();
-
 	int curMinFreeId = s_minFreeId;
-	for (int i = s_minFreeId + 1; i < s_maxThreadsNum; i++){
+	for (int i = s_minFreeId; i < s_maxThreadsNum; i++){
 		if (s_threads[i] == nullptr){
-			s_minFreeId = i;
+            curMinFreeId = i;
             break;
 		}
 	}
@@ -84,29 +82,21 @@ void ThreadManager::ThreadManager_destruct() {
     }
 }
 
-void ThreadManager::terminate(int threadId) {
-    Thread* targetThread = s_threads[threadId];
+void ThreadManager::terminateThread(int id) {
+    Thread* targetThread = s_threads[id];
 	if (targetThread->getState() == RUNNING){
-//		targetThread->setState(TERMINATED);
-        ThreadManager::_deleteThread(threadId);
+        _deleteThread(id);
         Scheduler::setNoRunningThread();
         Scheduler::switchThread(SIGUSR1);
-	}else if(targetThread->getState() == READY)
+	} else if(targetThread->getState() == READY)
 	{
-		Scheduler::removeThreadFromReady(threadId); // removes thread from ready queue
+		Scheduler::removeThreadFromReady(id); // removes thread from ready queue
 	}
-    ThreadManager::_deleteThread(threadId);
+    if(Scheduler::isIdSleeping(id)){
+        Scheduler::removeThreadFromSleeping(id); // removes thread from sleeping vector
+    }
+    _deleteThread(id);
 }
-
-//void ThreadManager::deleteTerminatedThreads()
-//{
-//	for(int i=0; i<s_maxThreadsNum; i++){
-//		if(s_threads[i]->getState() == TERMINATED)
-//		{
-//			ThreadManager::_deleteThread(i);
-//		}
-//	}
-//}
 
 void ThreadManager::blockThread(int id){
 	if (s_threads[id]->getState() == RUNNING){
@@ -120,15 +110,17 @@ void ThreadManager::blockThread(int id){
 
 void ThreadManager::resumeThread(int id)
 {
-	Thread* targetThread = ThreadManager::getThreadById(id);
+	Thread* targetThread = s_threads[id];
 	if (targetThread->getState() == BLOCKED){
 		targetThread->setState(READY);
-		Scheduler::addThreadToReadyQueue(id);
 	}
+    if(!Scheduler::isIdSleeping(id)){ // not sleeping
+        Scheduler::addThreadToReadyQueue(id);
+    }
 }
 
 void ThreadManager::sleepThread(int id, int numQuantums){
-    ThreadManager::getThreadById(id)->setState(READY);
+    s_threads[id]->setState(READY);
     Scheduler::addThreadToSleep(numQuantums);
     Scheduler::switchThread(SIGUSR1);
 }

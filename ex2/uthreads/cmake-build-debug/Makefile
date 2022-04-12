@@ -201,29 +201,29 @@ ThreadManager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/ThreadManager.cpp.s
 .PHONY : ThreadManager.cpp.s
 
-main.o: main.cpp.o
-.PHONY : main.o
+home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.o: home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o
+.PHONY : home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.o
 
 # target to build an object file
-main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/main.cpp.o
-.PHONY : main.cpp.o
+home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o
+.PHONY : home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o
 
-main.i: main.cpp.i
-.PHONY : main.i
+home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.i: home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.i
+.PHONY : home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.i
 
 # target to preprocess a source file
-main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/main.cpp.i
-.PHONY : main.cpp.i
+home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.i
+.PHONY : home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.i
 
-main.s: main.cpp.s
-.PHONY : main.s
+home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.s: home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.s
+.PHONY : home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.s
 
 # target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/main.cpp.s
-.PHONY : main.cpp.s
+home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.s
+.PHONY : home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.s
 
 uthreads.o: uthreads.cpp.o
 .PHONY : uthreads.o
@@ -267,9 +267,9 @@ help:
 	@echo "... ThreadManager.o"
 	@echo "... ThreadManager.i"
 	@echo "... ThreadManager.s"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.o"
+	@echo "... home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.i"
+	@echo "... home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.s"
 	@echo "... uthreads.o"
 	@echo "... uthreads.i"
 	@echo "... uthreads.s"

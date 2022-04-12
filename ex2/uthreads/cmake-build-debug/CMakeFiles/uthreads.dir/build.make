@@ -125,19 +125,19 @@ CMakeFiles/uthreads.dir/ThreadManager.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/uthreads.dir/ThreadManager.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/ThreadManager.cpp -o CMakeFiles/uthreads.dir/ThreadManager.cpp.s
 
-CMakeFiles/uthreads.dir/main.cpp.o: CMakeFiles/uthreads.dir/flags.make
-CMakeFiles/uthreads.dir/main.cpp.o: ../main.cpp
-CMakeFiles/uthreads.dir/main.cpp.o: CMakeFiles/uthreads.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/uthreads.dir/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/uthreads.dir/main.cpp.o -MF CMakeFiles/uthreads.dir/main.cpp.o.d -o CMakeFiles/uthreads.dir/main.cpp.o -c /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/main.cpp
+CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o: CMakeFiles/uthreads.dir/flags.make
+CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o: /home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp
+CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o: CMakeFiles/uthreads.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o -MF CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o.d -o CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o -c /home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp
 
-CMakeFiles/uthreads.dir/main.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/uthreads.dir/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/main.cpp > CMakeFiles/uthreads.dir/main.cpp.i
+CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp > CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.i
 
-CMakeFiles/uthreads.dir/main.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/uthreads.dir/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/main.cpp -o CMakeFiles/uthreads.dir/main.cpp.s
+CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp -o CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.s
 
 # Object files for target uthreads
 uthreads_OBJECTS = \
@@ -145,7 +145,7 @@ uthreads_OBJECTS = \
 "CMakeFiles/uthreads.dir/Scheduler.cpp.o" \
 "CMakeFiles/uthreads.dir/Thread.cpp.o" \
 "CMakeFiles/uthreads.dir/ThreadManager.cpp.o" \
-"CMakeFiles/uthreads.dir/main.cpp.o"
+"CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o"
 
 # External object files for target uthreads
 uthreads_EXTERNAL_OBJECTS =
@@ -154,7 +154,7 @@ uthreads: CMakeFiles/uthreads.dir/uthreads.cpp.o
 uthreads: CMakeFiles/uthreads.dir/Scheduler.cpp.o
 uthreads: CMakeFiles/uthreads.dir/Thread.cpp.o
 uthreads: CMakeFiles/uthreads.dir/ThreadManager.cpp.o
-uthreads: CMakeFiles/uthreads.dir/main.cpp.o
+uthreads: CMakeFiles/uthreads.dir/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp.o
 uthreads: CMakeFiles/uthreads.dir/build.make
 uthreads: CMakeFiles/uthreads.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable uthreads"

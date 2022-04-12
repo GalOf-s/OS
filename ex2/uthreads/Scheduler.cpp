@@ -17,11 +17,11 @@ void Scheduler::Scheduler_init(int quantum) {
 	s_totalQuantums = 1;
 	s_currentThreadId = MAIN_THREAD_ID;
 	ThreadManager::getThreadById(MAIN_THREAD_ID)->setState(RUNNING);
-	Scheduler::setTimer(quantum);
+	_setTimer(quantum);
 }
 
 
-void Scheduler::setTimer(int quantum){
+void Scheduler::_setTimer(int quantum){
     if (sigemptyset(&timerSet) < 0) {
         _systemError(SIGEMPTYSET_ERROR);
     }
@@ -59,12 +59,7 @@ void Scheduler::switchThread(int sig)
             return;
         }
     }
-//	Thread *prevThread = ThreadManager::getThreadById(s_currentThreadId); // the running thread time is up
-//	int retValue = sigsetjmp(prevThread->env, 1);
-//	bool switchThread = retValue == 0;
-//	if (switchThread){
-    Thread *currentThread = getNextReadyThread(); // TODO do we need this function here?
-
+    Thread *currentThread = _getNextReadyThread();
     if (currentThread == nullptr) {
         currentThread = ThreadManager::getThreadById(MAIN_THREAD_ID);
     }
@@ -75,14 +70,8 @@ void Scheduler::switchThread(int sig)
     s_totalQuantums++;
     _manageSleepThreads();
 
-//
-//		if (sig == SIGVTALRM){ // alarm turned on so switch to the next thread in line
-//			prevThread->setState(READY); // change the running thread state to ready
-//			s_readyThreads.push_back(s_currentThreadId); // push the current running thread to the back of the queue
-//		}
     _startTimer(); // starts the timer and jumps to run the thread
     siglongjmp(currentThread->env, 1);
-//	}
 }
 
 void Scheduler::addThreadToReadyQueue(int id){
@@ -101,24 +90,39 @@ void Scheduler::_startTimer(){
 	}
 }
 
-Thread *Scheduler::getNextReadyThread(){
+Thread *Scheduler::_getNextReadyThread(){
 	if(s_readyThreads.empty())
 	{
 		return nullptr;
 	}
-	Thread* currentThread;
-	do
-	{
-        s_currentThreadId = s_readyThreads.front();
-        s_readyThreads.erase(s_readyThreads.begin());
-		currentThread = ThreadManager::getThreadById(s_currentThreadId);
-	} while (currentThread->getState() != READY);
+    s_currentThreadId = s_readyThreads.front();
+    s_readyThreads.erase(s_readyThreads.begin());
+    Thread* currentThread = ThreadManager::getThreadById(s_currentThreadId);
+//	Thread* currentThread;
+//	do
+//	{
+//        s_currentThreadId = s_readyThreads.front();
+//        s_readyThreads.erase(s_readyThreads.begin());
+//		currentThread = ThreadManager::getThreadById(s_currentThreadId);
+//	} while (currentThread->getState() != READY);
 	return currentThread;
 }
 
 void Scheduler::removeThreadFromReady(int id) {
     s_readyThreads.erase(std::remove(s_readyThreads.begin(), s_readyThreads.end(), id),
                          s_readyThreads.end());
+}
+
+void Scheduler::removeThreadFromSleeping(int id){
+    auto it = s_sleepingThreads.begin();
+
+    while(it != s_sleepingThreads.end()) {
+        if(it->first == id) {
+            it = s_sleepingThreads.erase(it);
+            break;
+        }
+        else ++it;
+    }
 }
 
 int Scheduler::getCurrentThreadId() {
@@ -139,22 +143,28 @@ void Scheduler::_manageSleepThreads(){
 	while(it != s_sleepingThreads.end()) {
 		it->second--;
 		if(it->second == 0) {
-			it = s_sleepingThreads.erase(it);
 			if(ThreadManager::getThreadById(it->first)->getState() == READY){
-				Scheduler::addThreadToReadyQueue(it->first);
+				addThreadToReadyQueue(it->first);
 			}
-		}
+            it = s_sleepingThreads.erase(it);
+        }
 		else ++it;
 	}
+}
+
+bool Scheduler::isIdSleeping(int id) {
+    for (auto & s_sleepingThread : s_sleepingThreads) {
+        if (s_sleepingThread.first == id) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Scheduler::setNoRunningThread() {
     s_currentThreadId = NO_ID;
 }
 
-sigset_t &Scheduler::getTimerSet() {
-    return timerSet;
-}
 
 void Scheduler::blockTimerSig() {
     if (sigprocmask(SIG_BLOCK, &timerSet, NULL) < 0) {

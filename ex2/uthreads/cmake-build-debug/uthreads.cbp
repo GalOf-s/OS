@@ -82,6 +82,9 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/ex2tests/test7_no_out_different.cpp">
+			<Option target="uthreads"/>
+		</Unit>
 		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/Scheduler.cpp">
 			<Option target="uthreads"/>
 		</Unit>
@@ -98,9 +101,6 @@
 			<Option target="uthreads"/>
 		</Unit>
 		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/ThreadManager.h">
-			<Option target="uthreads"/>
-		</Unit>
-		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/main.cpp">
 			<Option target="uthreads"/>
 		</Unit>
 		<Unit filename="/home/dorelby/CLionProjects/OS/OS/ex2/uthreads/uthreads.cpp">
