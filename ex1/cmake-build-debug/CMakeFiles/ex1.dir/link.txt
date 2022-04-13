@@ -1,2 +1,0 @@
-/usr/bin/ar.exe qc libex1.a  CMakeFiles/ex1.dir/osm.cpp.o
-/usr/bin/ranlib.exe libex1.a

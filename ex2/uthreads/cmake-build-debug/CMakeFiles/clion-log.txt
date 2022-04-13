@@ -1,4 +1,0 @@
-/home/dorelby/Downloads/CLion-2021.3.3/clion-2021.3.3/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/dorelby/CLionProjects/OS/OS/ex2/uthreads
--- Configuring done
--- Generating done
--- Build files have been written to: /home/dorelby/CLionProjects/OS/OS/ex2/uthreads/cmake-build-debug

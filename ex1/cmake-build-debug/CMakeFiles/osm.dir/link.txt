@@ -1,2 +1,0 @@
-/usr/bin/ar.exe qc libosm.a  CMakeFiles/osm.dir/osm.cpp.o
-/usr/bin/ranlib.exe libosm.a

@@ -1,3 +1,0 @@
-/cygdrive/c/Users/gofer/Documents/University/OS/ex1/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/cygdrive/c/Users/gofer/Documents/University/OS/ex1/cmake-build-debug/CMakeFiles/ex1_test.dir
-/cygdrive/c/Users/gofer/Documents/University/OS/ex1/cmake-build-debug/CMakeFiles/edit_cache.dir

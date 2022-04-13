@@ -33,3 +33,9 @@
 
 .idea/
 /ex2/uthreads/cmake-build-debug/
+
+ex2/uthreads/cmake-build-debug-remote/
+
+ex2/uthreads/cmake-build-debug-cygwin/
+
+ex1/cmake-build-debug/CMakeFiles/
