@@ -39,7 +39,6 @@ void Scheduler::_setTimer(int quantum){
 	timer.it_value.tv_sec = quantum / MIC_TO_SEC;        // first time interval, seconds part
 	timer.it_value.tv_usec = quantum % MIC_TO_SEC;        // first time interval, microseconds part
 
-	// configure the timer to expire every 3 sec after that.
 	timer.it_interval.tv_sec = 0;    // following time intervals seconds part
 	timer.it_interval.tv_usec = 0;    // following time intervals, microseconds part
 
@@ -98,13 +97,6 @@ Thread *Scheduler::_getNextReadyThread(){
     s_currentThreadId = s_readyThreads.front();
     s_readyThreads.erase(s_readyThreads.begin());
     Thread* currentThread = ThreadManager::getThreadById(s_currentThreadId);
-//	Thread* currentThread;
-//	do
-//	{
-//        s_currentThreadId = s_readyThreads.front();
-//        s_readyThreads.erase(s_readyThreads.begin());
-//		currentThread = ThreadManager::getThreadById(s_currentThreadId);
-//	} while (currentThread->getState() != READY);
 	return currentThread;
 }
 
@@ -134,7 +126,7 @@ int Scheduler::getTotalQuantums() {
 }
 
 void Scheduler::addThreadToSleep(int numQuantums) {
-    s_sleepingThreads.emplace_back(s_currentThreadId, numQuantums + 1); // TODO check if numQuantums +1 needed
+    s_sleepingThreads.emplace_back(s_currentThreadId, numQuantums);
 }
 
 void Scheduler::_manageSleepThreads(){

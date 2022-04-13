@@ -1,0 +1,69 @@
+gal.ofer1, dorelby
+Gal Ofer (211589544),  Dorel Ben Yehezkel (318596616)
+EX: 2
+
+FILES:
+uthreads.cpp -- a file with definitions to function declared in uthreads.h
+Thread.h -- header file for the Thread class, including a thread's properties, like state, id and
+            action
+Thread.cpp -- definitions of the Thread class
+ThreadManager.h -- header file for the ThreadManager class, a "static" class which keeps track of all
+                   the threads in the program, and allows to create and destruct them
+ThreadManager.cpp -- definitions of the ThreadManager class
+Scheduler.h -- header file for the Scheduler class, a "static" class which manages thread switching,
+               sleeping, and performs scheduling decisions when they're necessary
+Scheduler.cpp -- definitions of the Scheduler class class
+
+REMARKS:
+One remark we want to make regards the way we implemented the state of a sleeping thread. Since the
+exercise describes how to handle a thread which is both sleeping and blocked, and a thread can only
+be sent to sleep when it's running, we deducted that a thread can be blocked and unblocked while it;
+s sleeping, and calling uthread_block with the id of a sleeping thread will not cause an error.
+
+
+ANSWERS:
+
+Q1:
+One use for user-level threads can be in cases where a large amount of independent actions are to be
+preformed, and a significant part of each action does not require the CPU to run it (for example,
+sending a request to a remote server, waiting for its response and then process it). In such a
+case, using a different thread for each action can save time waiting for an external action, and
+allow "parallel" waiting. Another advantage of threads in such a case is that sometimes the
+external program\device\server we are waiting for is able to efficiently handle multiple requests
+in parallel, and threads allow us to send it such requests. Another important note is that since
+user-level threads are all part of the same process all the results can later be easily joined
+together.
+
+Q2:
+advantages:
+1. A separate memory space for each tab (since they're processes) is safer, since it significantly
+   reduces the risk that one site will be able to access data the another site saved in the memory.
+2. Not all OS's support kernel-level threads, and Chrome developers probably want it to run on most
+   popular OS's.
+disadvantages:
+1. Context switching between threads is faster than between processes, which is desirable in Chrome
+since users switch tabs a lot.
+2. Using processes instead of threads leads to higher resources consumption, which is a known issue
+   of Chrome.
+
+Q3:
+The action of of killing a process induces several interrupts and signals. First of all, when typing
+ the command "kill <pid>" and hitting enter, each key stroke causes an interrupt. These interrupts
+ are handled by the OS. Later, the shell process resumes by some signal sent to it by the os, which
+ results in the command letters appearing on the screen. After enter is typed, the shell process
+ sends an interrupt the OS, causing it to send a signal to a process which will run the kill command
+ . The command in turn causes another interrupt, which the OS handles by sending a KILL signal to
+ the process with the specified id. Which receives it and exits.
+
+Q4:
+While real time is the actual amount of time that passes from the start to the end of a program's
+execution, when measuring virtual time only the cpu time required to complete the task without any
+interruption.
+
+Q5:
+sigsetjmp is a function used to save a "bookmark" in the code, by saving the current stack context,
+CPU state and optionally signal masks in the memory for later use. siglongjmp allow us to "restore"
+environments we previously save, and jumping back into the the same point in the code where we
+initially called sigsetjmp.
+
+

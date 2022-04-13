@@ -135,37 +135,37 @@ void neverEnding_j()
     }
 }
 
-///**
-// * A simple function that sends it self to sleep.
-// */
-//void sleeper()
-//{
-//    int printCount = 0;
-//    for (int i = 0; ; i++)
-//    {
-//        if (i%PRINTER == 0)
-//        {
-//            if (print) {cout << "in sleeper(" << printCount << ")" << endl;}
-//
-//            if (printCount == 15)
-//            {
-//                if (print) {cout << "sleeper went to sleep for 50 quants!" << endl;}
-//                uthread_sleep(50);
-//                if (print) {cout << "sleeper is awake again!" << endl;}
-//            }
-//
-//            if (printCount == 57)
-//            {
-//                break;
-//            }
-//            printCount++;
-//        }
-//    }
-//
-//    if (print) {cout << "sleeper terminates" << endl;}
-//    int me = uthread_get_tid();
-//    uthread_terminate(me);
-//}
+/**
+ * A simple function that sends it self to sleep.
+ */
+void sleeper()
+{
+    int printCount = 0;
+    for (int i = 0; ; i++)
+    {
+        if (i%PRINTER == 0)
+        {
+            if (print) {cout << "in sleeper(" << printCount << ")" << endl;}
+
+            if (printCount == 15)
+            {
+                if (print) {cout << "sleeper went to sleep for 50 quants!" << endl;}
+                uthread_sleep(50);
+                if (print) {cout << "sleeper is awake again!" << endl;}
+            }
+
+            if (printCount == 57)
+            {
+                break;
+            }
+            printCount++;
+        }
+    }
+
+    if (print) {cout << "sleeper terminates" << endl;}
+    int me = uthread_get_tid();
+    uthread_terminate(me);
+}
 
 /**
  * Blocks some thread and then unblocks its.
@@ -231,8 +231,8 @@ int main()
     int jid = uthread_spawn(&neverEnding_j);
     if (print) {cout << "MAIN SPAWNS j : " << jid << endl;}
 
-//    int sleeperid = uthread_spawn(&sleeper, 1);
-//    if (print) {cout << "MAIN SPAWNS sleeper : " << sleeperid << endl;}
+    int sleeperid = uthread_spawn(&sleeper);
+    if (print) {cout << "MAIN SPAWNS sleeper : " << sleeperid << endl;}
 
     int blockerid = uthread_spawn(&blocker);
     if (print) {cout << "MAIN SPAWNS blockerid : " << blockerid << endl;}
@@ -248,10 +248,10 @@ int main()
 
             if (printCount == 20)
             {
-//                if (print) {cout << "GOOD-ERR Main blocks sleeping sleeper!" << endl;}
-//                uthread_block(sleeperid);
-//                if (print) {cout << "ERR Main unblocks sleeping sleeper!" << endl;}
-//                uthread_resume(sleeperid);
+                if (print) {cout << "GOOD-ERR Main blocks sleeping sleeper!" << endl;}
+                uthread_block(sleeperid);
+                if (print) {cout << "ERR Main unblocks sleeping sleeper!" << endl;}
+                uthread_resume(sleeperid);
                 if (print) {cout << "ERR Main blocks non-existent 99!" << endl;}
                 uthread_block(99);
                 if (print) {cout << "ERR Main unblocks non-existent 101!" << endl;}
@@ -266,8 +266,8 @@ int main()
                 uthread_terminate(hid);
                 uthread_terminate(iid);
 
-//                if (print) {cout << "ERR Main unblocks sleeping sleeper!" << endl;}
-//                uthread_resume(sleeperid);
+                if (print) {cout << "ERR Main unblocks sleeping sleeper!" << endl;}
+                uthread_resume(sleeperid);
             }
 
 

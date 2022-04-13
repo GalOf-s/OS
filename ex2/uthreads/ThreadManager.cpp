@@ -120,9 +120,8 @@ void ThreadManager::resumeThread(int id)
 }
 
 void ThreadManager::sleepThread(int id, int numQuantums){
-    s_threads[id]->setState(READY);
     Scheduler::addThreadToSleep(numQuantums);
-    Scheduler::switchThread(SIGUSR1);
+    Scheduler::switchThread(SIGUSR1); // TODO: make sure the current running thread is set to ready
 }
 
 void ThreadManager::_systemError(const std::string &string) {

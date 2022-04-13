@@ -106,6 +106,7 @@ int uthread_sleep(int num_quantums)
 	if(currentThreadId == MAIN_THREAD_ID){
         return threadLibraryError(ILLEGAL_SLEEP_ERROR);
 	}
+	ThreadManager::getThreadById(currentThreadId)->setState(READY);
     ThreadManager::sleepThread(currentThreadId, num_quantums);
     Scheduler::unblockTimerSig();
 	return SUCCESS;
