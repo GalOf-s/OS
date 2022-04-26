@@ -57,7 +57,7 @@ int ThreadManager::addNewThread(thread_entry_point entry_point)
 
 int ThreadManager::validateThreadId(int id)
 {
-	if(id < 0 || MAX_THREAD_ID - 1 < id){
+	if(id < 0 || MAX_THREAD_NUM - 1 < id){
 		return FAILURE;
 	}
 	if (s_threads[id] == nullptr){

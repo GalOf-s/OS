@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../uthreads/uthreads.h"
+#include "uthreads.h"
 #include <unordered_map>
 
 int a;

@@ -33,7 +33,7 @@ int uthread_init(int quantum_usecs)
     if(quantum_usecs <= 0){
         return threadLibraryError(NEGATIVE_QUANTUM_ERROR);
     }
-	ThreadManager::ThreadManager_init(MAX_THREAD_ID);
+	ThreadManager::ThreadManager_init(MAX_THREAD_NUM);
 	Scheduler::Scheduler_init(quantum_usecs);
 	return SUCCESS;
 }

@@ -1,0 +1,4 @@
+/home/dorelby/Downloads/CLion-2021.3.3/clion-2021.3.3/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/dorelby/Downloads/CLion-2021.3.3/clion-2021.3.3/bin/ninja/linux/ninja -G Ninja /home/dorelby/CLionProjects/OS/OS/ex3
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/dorelby/CLionProjects/OS/OS/ex3/cmake-build-debug

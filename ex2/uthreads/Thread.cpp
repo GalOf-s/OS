@@ -77,5 +77,7 @@ void Thread::incQuantumCounter() {
 
 Thread::~Thread()
 {
-	delete[] _stack;
+    if (_id != 0){
+        delete[] _stack;
+    }
 }
