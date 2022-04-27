@@ -1,4 +1,13 @@
+#include <atomic>
 #include "MapReduceFramework.h"
+#include "Barrier.h"
+
+
+typedef struct JobContext{
+	std::atomic<int>* input_vector_index;
+	Barrier* barrier;
+} JobContext;
+
 
 /**
  * This function starts running the MapReduce algorithm (with several threads)
