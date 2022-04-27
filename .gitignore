@@ -38,4 +38,10 @@ ex2/uthreads/cmake-build-debug-remote/
 
 ex2/uthreads/cmake-build-debug-cygwin/
 
-ex1/cmake-build-debug/CMakeFiles/
+ex1/cmake-build-debug/
+
+ex2/uthreads/makefile example
+
+ex3/Resources/
+
+ex3/cmake-build-debug/
