@@ -17,11 +17,13 @@ void MapReduceWorker::run(const InputVec &inputVec, OutputVec &outputVec)
 
 int MapReduceWorker::mapPhase(const InputVec &inputVec)
 {
+	_progressCount = 0;
 	InputPair next_pair;
 	int next_pair_index = (*(this->_jobContext->input_vector_index))++;
 	while(next_pair_index < inputVec.size()){
 		next_pair = inputVec[next_pair_index];
 		this->_mapReduceClient->map(next_pair.first, next_pair.second,this);
+		_progressCount++;
 		next_pair_index = (*(this->_jobContext->input_vector_index))++;
 	}
 	return 0;
