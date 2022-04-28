@@ -1,13 +1,26 @@
+#include <iostream>
 #include <atomic>
 #include "MapReduceFramework.h"
 #include "Barrier.h"
+#include "MapReduceWorker.h"
+
+#define SYSTEM_ERROR "system error: "
+#define MEMORY_ALLOCATION_ERROR "failed to allocate memory."
+
 
 
 typedef struct JobContext{
-	std::atomic<int>* input_vector_index;
-	Barrier* barrier;
+    int multiThreadLevel;
+    MapReduceWorker **mapReduceWorkers;
+    pthread_t *threads;
+
+
 } JobContext;
 
+void systemError(const std::string &string) {
+    std::cerr << SYSTEM_ERROR + string << std::endl;
+    exit(EXIT_FAILURE);
+}
 
 /**
  * This function starts running the MapReduce algorithm (with several threads)
@@ -24,6 +37,25 @@ JobHandle startMapReduceJob (const MapReduceClient& client,
                              const InputVec& inputVec,
                              OutputVec& outputVec,
                              int multiThreadLevel) {
+    JobContext *jobContext;
+    try{
+        MapReduceWorker::MapReduceWorker_init(client, inputVec);
+        auto **mapReduceWorkers = new MapReduceWorker* [multiThreadLevel];
+        auto *threads = new pthread_t[multiThreadLevel];
+        jobContext = new JobContext{multiThreadLevel, mapReduceWorkers, threads};
+        for (int i = 0; i < multiThreadLevel; i++) {
+            *mapReduceWorkers[i] = MapReduceWorker(i);
+
+            if (pthread_create(threads + i, nullptr, &mapReduceWorkers[i]->run, *mapReduceWorkers[i]) != 0) {
+
+            }
+        }
+    }
+    catch (std::bad_alloc &) {
+        systemError(MEMORY_ALLOCATION_ERROR);
+    }
+
+
 
 }
 
@@ -68,7 +100,9 @@ void closeJobHandle(JobHandle job) {
  * @param context Contains data structure of the thread that created the intermediary element.
  */
 void emit2 (K2* key, V2* value, void* context) {
-
+    auto mapReduceWorker = (MapReduceWorker *) context;
+    IntermediatePair intermediatePair(key, value);
+    mapReduceWorker->storeMapResult(intermediatePair);
 }
 
 /**
