@@ -1,22 +1,22 @@
 #include <algorithm>
-#include "MapReduceWorker.h"
+#include "ThreadContext.h"
 #include "Barrier.h"
 
 
-const MapReduceClient* MapReduceWorker::s_mapReduceClient;
-const InputVec* MapReduceWorker::s_inputVec;
-std::atomic<int> MapReduceWorker::s_atomic_inputVectorIndex;
-std::atomic<int> MapReduceWorker::s_atomic_progressCounter;
-JobState MapReduceWorker::s_jobState;
-pthread_mutex_t MapReduceWorker::s_mutex_stagePercentage;
-std::vector<IntermediateVec> MapReduceWorker::allIntermediateVec;
+const MapReduceClient* ThreadContext::s_mapReduceClient;
+const InputVec* ThreadContext::s_inputVec;
+std::atomic<int> ThreadContext::s_atomic_inputVectorIndex;
+std::atomic<int> ThreadContext::s_atomic_progressCounter;
+JobState ThreadContext::s_jobState;
+pthread_mutex_t ThreadContext::s_mutex_stagePercentage;
+std::vector<IntermediateVec> ThreadContext::shuffleVec;
 
-MapReduceWorker::MapReduceWorker(int id)
+ThreadContext::ThreadContext(int id)
 {
 	_id = id;
 }
 
-void MapReduceWorker::MapReduceWorker_init(const MapReduceClient& client, const InputVec& inputVec)
+void ThreadContext::ThreadContext_init(const MapReduceClient& client, const InputVec& inputVec)
 {
     s_mapReduceClient = &client;
     s_inputVec = &inputVec;
@@ -26,14 +26,19 @@ void MapReduceWorker::MapReduceWorker_init(const MapReduceClient& client, const 
     _initMutex(s_mutex_stagePercentage);
 }
 
-void *MapReduceWorker::run(void *args)
+void *ThreadContext::run()
 {
     s_jobState.stage = MAP_STAGE; // TODO check if is it ok that all threads do this?
 	mapPhase();
 	sortPhase();
+    s_barrier->barrier();
+    if(_id == 0) {
+        shufflePhase();
+    }
+    reducePhase();
 }
 
-int MapReduceWorker::mapPhase()
+int ThreadContext::mapPhase()
 {
 	int inputVectorIndex = (s_atomic_inputVectorIndex)++;
 	while(inputVectorIndex < s_inputVec->size()){
@@ -54,41 +59,37 @@ bool pairComparer(IntermediatePair pair1, IntermediatePair pair2){
 	return pair1.first < pair2.first;
 }
 
-int MapReduceWorker::sortPhase()
+int ThreadContext::sortPhase()
 {
 	std::sort(this->_intermediateVec.begin(), this->_intermediateVec.end(), pairComparer);
-	s_barrier->barrier();
-    if(_id == 0) {
-        shufflePhase();
-        reducePhase();
-    }
+
 	return 0;
 }
 
-int MapReduceWorker::shufflePhase() {
+int ThreadContext::shufflePhase() {
     return 0;
 }
 
-void MapReduceWorker::_initMutex(pthread_mutex_t &mutex) {
+void ThreadContext::_initMutex(pthread_mutex_t &mutex) {
     if (pthread_mutex_init(&mutex, nullptr) != 0) {
         _systemError(PTHREAD_MUTEX_INIT_ERROR);
     }
 }
 
-void MapReduceWorker::_lockMutex(pthread_mutex_t &mutex) {
+void ThreadContext::_lockMutex(pthread_mutex_t &mutex) {
     if (pthread_mutex_lock(&mutex) != 0) {
         _systemError(PTHREAD_MUTEX_LOCK_ERROR);
     }
 }
 
-void MapReduceWorker::_unlockMutex(pthread_mutex_t &mutex) {
+void ThreadContext::_unlockMutex(pthread_mutex_t &mutex) {
     if (pthread_mutex_unlock(&mutex) != 0) {
         _systemError(PTHREAD_MUTEX_UNLOCK_ERROR);
     }
 }
 
 
-void MapReduceWorker::_systemError(const std::string &string) {
+void ThreadContext::_systemError(const std::string &string) {
     std::cerr << SYSTEM_ERROR + string << std::endl;
     exit(EXIT_FAILURE);
 }

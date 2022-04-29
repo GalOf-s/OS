@@ -1,5 +1,5 @@
-#ifndef EX3_MAPREDUCEWORKER_H
-#define EX3_MAPREDUCEWORKER_H
+#ifndef EX3_THREADCONTEXT_H
+#define EX3_THREADCONTEXT_H
 
 #include "MapReduceFramework.h"
 #include "MapReduceFramework.cpp"
@@ -9,13 +9,13 @@
 #define PTHREAD_MUTEX_LOCK_ERROR "pthread mutex lock failed."
 #define PTHREAD_MUTEX_UNLOCK_ERROR "pthread mutex unlock failed."
 
-class MapReduceWorker
+class ThreadContext
 {
 public:
 
-    static void MapReduceWorker_init(const MapReduceClient& client, const InputVec& inputVec);
-	explicit MapReduceWorker(int id);
-	void *run(void *args);
+    static void ThreadContext_init(const MapReduceClient& client, const InputVec& inputVec);
+	explicit ThreadContext(int id);
+	void *run();
 	void storeMapResult(IntermediatePair intermediatePair){_intermediateVec.push_back(intermediatePair);}
 
 private:
@@ -44,4 +44,4 @@ private:
 };
 
 
-#endif //EX3_MAPREDUCEWORKER_H
+#endif //EX3_THREADCONTEXT_H

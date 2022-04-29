@@ -4,4 +4,4 @@ project(ex3)
 set(CMAKE_CXX_STANDARD 14)
 
 add_executable(ex3 MapReduceFramework.h MapReduceFramework.cpp MapReduceClient.h SampleClient.cpp
-        Barrier.cpp Barrier.h MapReduceWorker.h MapReduceWorker.cpp)
+        Barrier.cpp Barrier.h ThreadContext.h ThreadContext.cpp JobContext.cpp JobContext.h)
