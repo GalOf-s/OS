@@ -12,23 +12,13 @@
 class ThreadContext
 {
 public:
-
-    static void ThreadContext_init(const MapReduceClient& client, const InputVec& inputVec);
-	explicit ThreadContext(int id);
+	explicit ThreadContext(int id, JobContext *jobContext);
 	void *run();
 	void storeMapResult(IntermediatePair intermediatePair){_intermediateVec.push_back(intermediatePair);}
 
 private:
-    static const MapReduceClient* s_mapReduceClient;
-    static const InputVec* s_inputVec;
-    static std::atomic<int> s_atomic_inputVectorIndex;
-    static std::atomic<int> s_atomic_progressCounter;
-    static JobState s_jobState;
-    static Barrier* s_barrier;
-    static pthread_mutex_t s_mutex_stagePercentage;
-    static std::vector<IntermediateVec> shuffleVec;
-
 	int _id;
+	JobContext* _jobContext;
     IntermediateVec _intermediateVec;
 
 

@@ -29,11 +29,11 @@ JobHandle startMapReduceJob (const MapReduceClient& client,
                              const InputVec& inputVec,
                              OutputVec& outputVec,
                              int multiThreadLevel) {
-    ThreadContext::ThreadContext_init(client, inputVec); // TODO check if should all be static ?
     JobContext *jobContext;
     try{
-        jobContext = static_cast<JobContext *>(new JobContext(multiThreadLevel));
-//        auto **mapReduceWorkers = new ThreadContext* [_multiThreadLevel];
+        jobContext = static_cast<JobContext *>(new JobContext(multiThreadLevel,
+															  &client,
+															  &inputVec));
 //        auto *threads = new pthread_t[_multiThreadLevel];
 //        jobContext = new JobContext{_multiThreadLevel, mapReduceWorkers, threads};
 //        for (int i = 0; i < _multiThreadLevel; i++) {

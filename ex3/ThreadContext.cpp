@@ -3,35 +3,19 @@
 #include "Barrier.h"
 
 
-const MapReduceClient* ThreadContext::s_mapReduceClient;
-const InputVec* ThreadContext::s_inputVec;
-std::atomic<int> ThreadContext::s_atomic_inputVectorIndex;
-std::atomic<int> ThreadContext::s_atomic_progressCounter;
-JobState ThreadContext::s_jobState;
-pthread_mutex_t ThreadContext::s_mutex_stagePercentage;
-std::vector<IntermediateVec> ThreadContext::shuffleVec;
 
-ThreadContext::ThreadContext(int id)
+ThreadContext::ThreadContext(int id, JobContext* jobContext)
 {
 	_id = id;
-}
-
-void ThreadContext::ThreadContext_init(const MapReduceClient& client, const InputVec& inputVec)
-{
-    s_mapReduceClient = &client;
-    s_inputVec = &inputVec;
-    s_atomic_inputVectorIndex = 0;
-    s_atomic_progressCounter = 0;
-    s_jobState = {UNDEFINED_STAGE, 0};
-    _initMutex(s_mutex_stagePercentage);
+	_jobContext = jobContext;
 }
 
 void *ThreadContext::run()
 {
-    s_jobState.stage = MAP_STAGE; // TODO check if is it ok that all threads do this?
+	_jobContext->jobState.stage = MAP_STAGE; // TODO check if is it ok that all threads do this?
 	mapPhase();
 	sortPhase();
-    s_barrier->barrier();
+	_jobContext->barrier->barrier(); // TODO: is it right to init here?
     if(_id == 0) {
         shufflePhase();
     }
@@ -40,17 +24,18 @@ void *ThreadContext::run()
 
 int ThreadContext::mapPhase()
 {
-	int inputVectorIndex = (s_atomic_inputVectorIndex)++;
-	while(inputVectorIndex < s_inputVec->size()){
-        InputPair nextPair = s_inputVec->at(inputVectorIndex);
-        s_mapReduceClient->map(nextPair.first, nextPair.second, this);
-        (s_atomic_progressCounter)++;
+	int inputVectorIndex = (_jobContext->atomic_inputVectorIndex)++;
+	while(inputVectorIndex < _jobContext->inputVec->size()){
+        InputPair nextPair = _jobContext->inputVec->at(inputVectorIndex);
+        _jobContext->mapReduceClient->map(nextPair.first, nextPair.second, this);
+        (_jobContext->atomic_progressCounter)++;
 
-        _lockMutex(s_mutex_stagePercentage);
-        s_jobState.percentage = ((float) s_atomic_progressCounter / (float) s_inputVec->size()) * 100;
-        _unlockMutex(s_mutex_stagePercentage);
+        _lockMutex(_jobContext->s_mutex_stagePercentage);
+		_jobContext->jobState.percentage = ((float) _jobContext->atomic_progressCounter / (float) _jobContext->inputVec->size())
+										   * 100;
+        _unlockMutex(_jobContext->s_mutex_stagePercentage);
 
-        inputVectorIndex = (s_atomic_inputVectorIndex)++;
+        inputVectorIndex = (_jobContext->atomic_inputVectorIndex)++;
 	}
 	return 0;
 }
