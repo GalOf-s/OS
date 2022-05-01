@@ -4,7 +4,11 @@
 #include <semaphore.h>
 #include <iostream>
 
-
+#define NEXT_INDEX_OFFSET 31
+#define STAGE_OFFSET 62
+#define NEXT_INDEX_MASK 0x3fffffff80000000
+#define STAGE_MASK 0x3fffffffffffffff
+#define COMPLETED_COUNT_MASK 0x7fffffff
 
 JobContext::JobContext(int multiThreadLevel,
                        const MapReduceClient *client,
@@ -14,10 +18,8 @@ JobContext::JobContext(int multiThreadLevel,
     _mapReduceClient = client;
     _inputVec = inputVec;
     _outputVec = outputVec;
-    _atomic_inputVectorIndex = 0;
-    _atomic_progressCounter = 0;
-    _atomic_shuffleVectorSize = 0;
-    _jobState = {UNDEFINED_STAGE, 0};
+    _atomic_progressTracker = 0;
+	jobState = {UNDEFINED_STAGE, 0};
     _initMutex();
     _initSem(); // TODO check if semaphore is needed
     _memoryAllocation();
@@ -59,22 +61,18 @@ void JobContext::_initSem() {
     }
 }
 
-void *JobContext::_run(void *args)
+void *JobContext::_run(void *inputThreadContext)
 {
-    auto *threadContext = (ThreadContext *) args;
-    _jobState.stage = MAP_STAGE; // TODO check if is it ok that all threads do this?
+	auto threadContext = (ThreadContext *) inputThreadContext;
     _mapPhase(threadContext);
     threadContext->sortPhase();
-    _barrier->barrier(); // TODO: is it right to init here?
-    if(threadContext->getId() == 0) {
-        // TODO mutex + update presentage each time
-        _jobState = {SHUFFLE_STAGE, 0};
-        _atomic_progressCounter = 0;
+    _barrier->barrier();
 
+    if(threadContext->getId() == 0) {
+		_atomic_progressTracker = ((uint64_t) SHUFFLE_STAGE) << STAGE_OFFSET;
         _shufflePhase();
 
-        // TODO mutex  + update presentage each time
-        _jobState = {REDUCE_STAGE, 0};
+		_atomic_progressTracker = ((uint64_t) REDUCE_STAGE) << STAGE_OFFSET;
         _wakeUpThreads();
     } else {
         _reduceSemDown(); // TODO can barrier can be done instead of a semaphore?
@@ -100,11 +98,14 @@ void JobContext::_wakeUpThreads() const {
 
 void JobContext::_mapPhase(ThreadContext *threadContext)
 {
-    int inputVectorIndex = (_atomic_inputVectorIndex)++;
+	if(_atomic_progressTracker < (((uint64_t) MAP_STAGE) << STAGE_OFFSET)){
+		_atomic_progressTracker += ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
+	}
+    int inputVectorIndex = getNextIndex(_atomic_progressTracker += (1 + (1 << NEXT_INDEX_OFFSET ))) - 1;
     while(inputVectorIndex < _inputVec->size()){
         InputPair nextPair = _inputVec->at(inputVectorIndex);
         _mapReduceClient->map(nextPair.first, nextPair.second, threadContext);
-        _incProgress();
+        _atomic_progressTracker += ((1 << NEXT_INDEX_OFFSET) + 1);
     }
 }
 
@@ -122,24 +123,24 @@ void JobContext::_unlockMutex(pthread_mutex_t &mutex) { // TODO: declare in begi
 	}
 }
 
-void JobContext::_incProgress() // TODO: make the updated values stage dependant
-{
-	(_atomic_progressCounter)++;
-	_lockMutex(_mutex_stagePercentage);
-    _jobState.percentage = ((float) _atomic_progressCounter / (float) _inputVec->size())
-                           * 100;
-	_unlockMutex(_mutex_stagePercentage);
-
-	(_atomic_inputVectorIndex)++;
-}
+//void JobContext::_incProgress() // TODO: make the updated values stage dependant
+//{
+//	(_atomic_progressCounter)++;
+//	_lockMutex(_mutex_stagePercentage);
+//    jobState.percentage = ((float) _atomic_progressCounter / (float) _inputVec->size())
+//                           * 100;
+//	_unlockMutex(_mutex_stagePercentage);
+//
+//	(_atomic_inputVectorIndex)++;
+//}
 
 
 void JobContext::_shufflePhase() {
     K2 *maxKey = _getMaxKey();
-    while (!maxKey){
+    while (maxKey){
         IntermediateVec maxVec = _getMaxVec(maxKey);
         _shuffleVec.push_back(maxVec);
-        (_atomic_shuffleVectorSize)++;
+        (_atomic_progressTracker)++;
         maxKey = _getMaxKey();
     }
 }
@@ -184,6 +185,22 @@ void JobContext::_systemError(const std::string &string) {
     exit(EXIT_FAILURE);
 }
 
+int JobContext::getNextIndex(u_int64_t progressTrackerValue){
+	return (int) progressTrackerValue & (NEXT_INDEX_MASK);
+}
 
+int JobContext::getState(u_int64_t progressTrackerValue){
+	return (int) progressTrackerValue & (STAGE_MASK);
+}
 
+int JobContext::getCompletedCount(u_int64_t progressTrackerValue){
+	return (int) progressTrackerValue & (COMPLETED_COUNT_MASK);
+}
 
+void JobContext::updateState()
+{
+	uint64_t currProgressTrackerValue = _atomic_progressTracker.load(); // TODO: should it be protected by lock
+	jobState.stage = stage_t(getState(currProgressTrackerValue));
+	int completed = getCompletedCount(currProgressTrackerValue);
+	jobState.percentage = 100 * (float)(completed / _inputVec->size()); // TODO: not always input vector
+}

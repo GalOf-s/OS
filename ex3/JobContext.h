@@ -28,7 +28,8 @@ public:
                OutputVec *outputVec);
 
     void storeReduceResult(OutputPair outputPair);
-
+	void updateState();
+	JobState jobState{};
 private:
     int _multiThreadLevel;
     const MapReduceClient *_mapReduceClient;
@@ -36,14 +37,12 @@ private:
     OutputVec *_outputVec;
     std::vector<ThreadContext> _threadContexts;
     std::vector<IntermediateVec> _shuffleVec;
-    std::atomic<int> _atomic_inputVectorIndex{};
-    std::atomic<int> _atomic_progressCounter{};
-    std::atomic<int> _atomic_shuffleVectorSize{};
+    std::atomic<u_int64_t> _atomic_progressTracker{};
     pthread_mutex_t _mutex_stagePercentage{};
     sem_t _sem_reducePhase{};
     pthread_t *_threads{};
     Barrier *_barrier{};
-    JobState _jobState{};
+
 
     static void _systemError(const std::string &string);
     static void _lockMutex(pthread_mutex_t &mutex); // TODO check if needed more mutex, if not needed delete arg
@@ -54,7 +53,7 @@ private:
     void _memoryAllocation();
     void _initMutex();
     void _initSem();
-    void *_run(void *args);
+    void *_run(void *inputThreadContext);
     void _mapPhase(ThreadContext *threadContext);
     void _incProgress();
     void _createThreads();
@@ -67,6 +66,11 @@ private:
 
     K2 *_getMaxKey();
 
+	int getNextIndex(u_int64_t progressTrackerValue);
+
+	int getState(u_int64_t progressTrackerValue);
+
+	int getCompletedCount(u_int64_t progressTrackerValue);
 };
 
 

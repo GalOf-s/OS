@@ -29,7 +29,7 @@ JobHandle startMapReduceJob (const MapReduceClient& client,
                              const InputVec& inputVec,
                              OutputVec& outputVec,
                              int multiThreadLevel) {
-    JobContext *jobContext;
+	JobContext *jobContext;
     try{
         jobContext = static_cast<JobContext *>(new JobContext(multiThreadLevel,
 															  &client,
@@ -57,7 +57,9 @@ void waitForJob(JobHandle job) {
  * @param state State to update.
  */
 void getJobState(JobHandle job, JobState* state) {
-
+	auto jobContext = (JobContext*) job;
+	jobContext->updateState();
+	*state = jobContext->jobState;
 }
 
 /**

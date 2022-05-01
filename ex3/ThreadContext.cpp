@@ -37,7 +37,7 @@ bool ThreadContext::isIntermediateVecEmpty() {
 
 //void *ThreadContext::run()
 //{
-//	_jobContext->_jobState.stage = MAP_STAGE; // TODO check if is it ok that all _threads do this?
+//	_jobContext->jobState.stage = MAP_STAGE; // TODO check if is it ok that all _threads do this?
 //	mapPhase();
 //	sortPhase();
 //	_jobContext->_barrier->_barrier(); // TODO: is it right to init here?
@@ -56,7 +56,7 @@ bool ThreadContext::isIntermediateVecEmpty() {
 //        (_jobContext->_atomic_progressCounter)++;
 //
 //        _lockMutex(_jobContext->s_mutex_stagePercentage);
-//		_jobContext->_jobState.percentage = ((float) _jobContext->_atomic_progressCounter / (float) _jobContext->_inputVec->size())
+//		_jobContext->jobState.percentage = ((float) _jobContext->_atomic_progressCounter / (float) _jobContext->_inputVec->size())
 //										   * 100;
 //        _unlockMutex(_jobContext->s_mutex_stagePercentage);
 //
