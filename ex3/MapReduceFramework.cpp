@@ -15,14 +15,14 @@ void systemError(const std::string &string) {
 
 
 /**
- * This function starts running the MapReduce algorithm (with several threads)
+ * This function starts running the MapReduce algorithm (with several _threads)
  * and returns a JobHandle.
  *
  * @param client The task that the framework should run.
  * @param inputVec The input elements.
  * @param outputVec An empty vector to which the output elements
  * will be added before returning.
- * @param multiThreadLevel A valid number of worker threads to be used for running the algorithm.
+ * @param multiThreadLevel A valid number of worker _threads to be used for running the algorithm.
  * @return JobHandle that will be used for monitoring the job.
  */
 JobHandle startMapReduceJob (const MapReduceClient& client,
@@ -33,18 +33,8 @@ JobHandle startMapReduceJob (const MapReduceClient& client,
     try{
         jobContext = static_cast<JobContext *>(new JobContext(multiThreadLevel,
 															  &client,
-															  &inputVec));
-//        auto *threads = new pthread_t[_multiThreadLevel];
-//        jobContext = new JobContext{_multiThreadLevel, mapReduceWorkers, threads};
-//        for (int i = 0; i < _multiThreadLevel; i++) {
-//            *mapReduceWorkers[i] = ThreadContext(i);
-//
-//            if (pthread_create(threads + i, nullptr,
-//                               [](void *obj){ return ((ThreadContext *)obj)->run(); },
-//                               mapReduceWorkers[i]) != 0) {
-//
-//            }
-//        }
+															  &inputVec,
+                                                              &outputVec));
     } catch (std::bad_alloc &) {
         systemError(MEMORY_ALLOCATION_ERROR);
     }
@@ -108,5 +98,9 @@ void emit2 (K2* key, V2* value, void* context) {
  * @param context Contains data structure of the thread that created the output element.
  */
 void emit3 (K3* key, V3* value, void* context) {
+    auto *threadJob = (JobContext *) context;
+    OutputPair outputPair(key, value);
 
+    // TODO mutex ?
+    threadJob->storeReduceResult(outputPair);
 }

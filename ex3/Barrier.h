@@ -2,7 +2,7 @@
 #define BARRIER_H
 #include <pthread.h>
 
-// a multiple use barrier
+// a multiple use _barrier
 
 class Barrier {
 public:
