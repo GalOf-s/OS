@@ -70,7 +70,7 @@ bool ThreadContext::isIntermediateVecEmpty() {
 //    return 0;
 //}
 
-//void ThreadContext::_initMutex(pthread_mutex_t &mutex) {
+//void ThreadContext::_initSaveOutputMutex(pthread_mutex_t &mutex) {
 //    if (pthread_mutex_init(&mutex, nullptr) != 0) {
 //        _systemError(PTHREAD_MUTEX_INIT_ERROR);
 //    }

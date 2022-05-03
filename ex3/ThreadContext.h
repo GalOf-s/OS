@@ -11,7 +11,7 @@ public:
     int getId() const;
     void sortPhase();
     void storeMapResult(IntermediatePair intermediatePair){_intermediateVec.push_back(intermediatePair);}
-//    static void _initMutex(pthread_mutex_t &mutex);
+//    static void _initSaveOutputMutex(pthread_mutex_t &mutex);
 //    static void _lockMutex(pthread_mutex_t &mutex);
 //    static void _unlockMutex(pthread_mutex_t &mutex);
 //    static void _systemError(const std::string &string);

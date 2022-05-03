@@ -1,14 +1,20 @@
 #include "JobContext.h"
-#include "Barrier.h"
-#include <thread>
-#include <semaphore.h>
-#include <iostream>
 
 #define NEXT_INDEX_OFFSET 31
 #define STAGE_OFFSET 62
-#define NEXT_INDEX_MASK 0x3fffffff80000000
-#define STAGE_MASK 0x3fffffffffffffff
-#define COMPLETED_COUNT_MASK 0x7fffffff
+
+#define COMPLETED_COUNT_MASK 0x7fffffff // first 31 bit store the number of already processed keys
+#define NEXT_INDEX_MASK 0x3fffffff80000000 // second 31 bit store the next index to process in the input vector
+#define STAGE_MASK 0x3fffffffffffffff // last  2 bits to flag the stage
+
+//#define TOTAL_COUNT_OFFSET 31
+//#define STAGE_OFFSET 62
+//
+//#define COMPLETED_COUNT_MASK 0x7fffffff // first 31 bit store the number of already processed keys
+//#define TOTAL_COUNT_MASK 0x3fffffff80000000 // second 31 bit store number of total keys to process
+//#define STAGE_MASK 0x3fffffffffffffff // last  2 bits to flag the stage
+
+
 
 JobContext::JobContext(int multiThreadLevel,
                        const MapReduceClient *client,
@@ -18,10 +24,14 @@ JobContext::JobContext(int multiThreadLevel,
     _mapReduceClient = client;
     _inputVec = inputVec;
     _outputVec = outputVec;
+    _atomic_nextIndex = 0;
+//    _atomic_progressTracker = _inputVec->size() << TOTAL_COUNT_OFFSET;
     _atomic_progressTracker = 0;
 	jobState = {UNDEFINED_STAGE, 0};
-    _initMutex();
-    _initSem(); // TODO check if semaphore is needed
+    _isWaitForJobCalled = false;
+    _initWaitForJobMutex();
+    _initSaveOutputMutex();
+    _initReduceSem(); // TODO check if semaphore is needed
     _memoryAllocation();
     _threadContexts = std::vector<ThreadContext>(multiThreadLevel);
 	_createThreads();
@@ -48,14 +58,22 @@ void JobContext::_createThreads() {
     }
 }
 
-void JobContext::_initMutex() {
-    if (pthread_mutex_init(&_mutex_stagePercentage, nullptr) != 0) {
+void JobContext::_initWaitForJobMutex() {
+    if (pthread_mutex_init(&_mutex_waitForJob, nullptr) != 0) {
         _systemError(PTHREAD_MUTEX_INIT_ERROR);
     }
 }
 
-void JobContext::_initSem() {
-    if (sem_init(&_sem_reducePhase, 0, 0) != 0) {
+
+void JobContext::_initSaveOutputMutex() {
+    if (pthread_mutex_init(&_mutex_saveOutput, nullptr) != 0) {
+        _systemError(PTHREAD_MUTEX_INIT_ERROR);
+    }
+}
+
+
+void JobContext::_initReduceSem() {
+    if (sem_init(_sem_reducePhase, 0, 0) != 0) {
         std::cerr << SYSTEM_ERROR << SEM_INIT_ERROR << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -73,6 +91,7 @@ void *JobContext::_run(void *inputThreadContext)
         _shufflePhase();
 
 		_atomic_progressTracker = ((uint64_t) REDUCE_STAGE) << STAGE_OFFSET;
+        _atomic_nextIndex = 0;
         _wakeUpThreads();
     } else {
         _reduceSemDown(); // TODO can barrier can be done instead of a semaphore?
@@ -81,7 +100,7 @@ void *JobContext::_run(void *inputThreadContext)
 }
 
 void JobContext::_reduceSemDown() {
-    if (sem_down(&_sem_reducePhase) != 0) {
+    if (sem_wait(_sem_reducePhase) != 0) {
         std::cerr << SYSTEM_ERROR << SEM_DOWN_ERROR << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -89,7 +108,7 @@ void JobContext::_reduceSemDown() {
 
 void JobContext::_wakeUpThreads() const {
     for (int i = 0; i < _multiThreadLevel; ++i) {
-        if (sem_post(&_sem_reducePhase) != 0) {
+        if (sem_post(_sem_reducePhase) != 0) {
             std::cerr << SYSTEM_ERROR << SEM_POST_ERROR << std::endl;
             exit(EXIT_FAILURE);
         }
@@ -98,14 +117,18 @@ void JobContext::_wakeUpThreads() const {
 
 void JobContext::_mapPhase(ThreadContext *threadContext)
 {
-	if(_atomic_progressTracker < (((uint64_t) MAP_STAGE) << STAGE_OFFSET)){
-		_atomic_progressTracker += ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
-	}
-    int inputVectorIndex = getNextIndex(_atomic_progressTracker += (1 + (1 << NEXT_INDEX_OFFSET ))) - 1;
-    while(inputVectorIndex < _inputVec->size()){
+//	if(_atomic_progressTracker < (((uint64_t) MAP_STAGE) << STAGE_OFFSET)) {
+//		_atomic_progressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
+//	}
+
+    _atomic_progressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
+    unsigned long inputVectorIndex = getNextIndex(_atomic_progressTracker += 1 << NEXT_INDEX_OFFSET) - 1;
+//    int inputVectorIndex = (_atomic_nextIndex)++;
+    while(inputVectorIndex < _inputVec->size()) {
         InputPair nextPair = _inputVec->at(inputVectorIndex);
         _mapReduceClient->map(nextPair.first, nextPair.second, threadContext);
-        _atomic_progressTracker += ((1 << NEXT_INDEX_OFFSET) + 1);
+        _atomic_progressTracker += 1 << NEXT_INDEX_OFFSET;
+//        inputVectorIndex = (_atomic_nextIndex)++;
     }
 }
 
@@ -126,10 +149,10 @@ void JobContext::_unlockMutex(pthread_mutex_t &mutex) { // TODO: declare in begi
 //void JobContext::_incProgress() // TODO: make the updated values stage dependant
 //{
 //	(_atomic_progressCounter)++;
-//	_lockMutex(_mutex_stagePercentage);
+//	_lockMutex(_mutex_saveOutput);
 //    jobState.percentage = ((float) _atomic_progressCounter / (float) _inputVec->size())
 //                           * 100;
-//	_unlockMutex(_mutex_stagePercentage);
+//	_unlockMutex(_mutex_saveOutput);
 //
 //	(_atomic_inputVectorIndex)++;
 //}
@@ -140,7 +163,7 @@ void JobContext::_shufflePhase() {
     while (maxKey){
         IntermediateVec maxVec = _getMaxVec(maxKey);
         _shuffleVec.push_back(maxVec);
-        (_atomic_progressTracker)++;
+        (_atomic_progressTracker) += maxVec.size(); // TODO is this atomic?
         maxKey = _getMaxKey();
     }
 }
@@ -173,11 +196,22 @@ bool JobContext::_equalKeys(K2 *firstKey, K2 *secondKey) {
 }
 
 void JobContext::_reducePhase() {
+    int shuffleVectorIndex = getNextIndex(_atomic_progressTracker += 1 << NEXT_INDEX_OFFSET) - 1;
+//    int shuffleVectorIndex = (_atomic_nextIndex)++;
+    while(shuffleVectorIndex < _shuffleVec.size()) {
+        IntermediateVec nextVec = _shuffleVec.at(shuffleVectorIndex);
+        _mapReduceClient->reduce(&nextVec,  this);
+        _atomic_progressTracker += nextVec.size(); // TODO is this atomic?
+        _atomic_progressTracker += 1 << NEXT_INDEX_OFFSET;
+//        shuffleVectorIndex = (_atomic_nextIndex)++;
+    }
 
 }
 
 void JobContext::storeReduceResult(OutputPair outputPair) {
+    _lockMutex(_mutex_saveOutput);
     _outputVec->push_back(outputPair);
+    _unlockMutex(_mutex_saveOutput);
 }
 
 void JobContext::_systemError(const std::string &string) {
@@ -185,22 +219,71 @@ void JobContext::_systemError(const std::string &string) {
     exit(EXIT_FAILURE);
 }
 
-int JobContext::getNextIndex(u_int64_t progressTrackerValue){
-	return (int) progressTrackerValue & (NEXT_INDEX_MASK);
+unsigned long JobContext::getNextIndex(uint64_t progressTrackerValue){
+	return progressTrackerValue & (NEXT_INDEX_MASK);
 }
 
-int JobContext::getState(u_int64_t progressTrackerValue){
-	return (int) progressTrackerValue & (STAGE_MASK);
+unsigned long JobContext::getCompletedCount(u_int64_t progressTrackerValue){
+    return progressTrackerValue & (COMPLETED_COUNT_MASK);
 }
 
-int JobContext::getCompletedCount(u_int64_t progressTrackerValue){
-	return (int) progressTrackerValue & (COMPLETED_COUNT_MASK);
+//unsigned long JobContext::getTotalCount(uint64_t progressTrackerValue){
+//    return progressTrackerValue & (TOTAL_COUNT_MASK);
+//}
+
+unsigned long JobContext::getState(uint64_t progressTrackerValue){
+	return progressTrackerValue & (STAGE_MASK);
 }
 
 void JobContext::updateState()
 {
 	uint64_t currProgressTrackerValue = _atomic_progressTracker.load(); // TODO: should it be protected by lock
 	jobState.stage = stage_t(getState(currProgressTrackerValue));
-	int completed = getCompletedCount(currProgressTrackerValue);
-	jobState.percentage = 100 * (float)(completed / _inputVec->size()); // TODO: not always input vector
+	unsigned long completed = getCompletedCount(currProgressTrackerValue);
+    jobState.percentage = 100 * (float) completed / (float) _inputVec->size(); // TODO: not always input vector
+//    unsigned long total = getTotalCount(currProgressTrackerValue);
+//    jobState.percentage = 100 * (float) completed / (float) total; // TODO: not always input vector + TODO mutex ?
+
+}
+
+void JobContext::_destroyMutex(pthread_mutex_t &mutex) {
+    if (pthread_mutex_destroy(&mutex) != 0) {
+        std::cerr << SYSTEM_ERROR << PTHREAD_MUTEX_DESTROY_ERROR << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
+void JobContext::_destroySem() {
+    if (sem_destroy(_sem_reducePhase) < 0) {
+        std::cerr << SYSTEM_ERROR << SEM_DESTROY_ERROR << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
+JobContext::~JobContext() {
+    _destroyMutex(_mutex_saveOutput);
+    _destroyMutex(_mutex_waitForJob);
+    _destroySem();
+    delete _barrier;
+    delete[] _threads;
+}
+
+bool JobContext::wasWaitForJobCalled() {
+    _lockMutex(_mutex_waitForJob);
+    if(_isWaitForJobCalled){
+        _unlockMutex(_mutex_waitForJob);
+        return true;
+    }
+    _isWaitForJobCalled = true;
+    _unlockMutex(_mutex_waitForJob);
+    return false;
+}
+
+void JobContext::joinThreads() {
+    for (int i = 0; i < _multiThreadLevel; ++i) {
+        if (pthread_join(_threads[i], nullptr) != 0) {
+            std::cerr << SYSTEM_ERROR << PTHREAD_JOIN_ERROR << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
 }

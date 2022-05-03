@@ -1,7 +1,5 @@
 #include <iostream>
-#include <atomic>
 #include "MapReduceFramework.h"
-#include "Barrier.h"
 #include "ThreadContext.h"
 #include "JobContext.h"
 
@@ -47,7 +45,11 @@ JobHandle startMapReduceJob (const MapReduceClient& client,
  * @param job A running job.
  */
 void waitForJob(JobHandle job) {
-
+    auto *jobContext = (JobContext *) job;
+    if(jobContext->wasWaitForJobCalled()) {
+        return;
+    }
+    jobContext->joinThreads();
 }
 
 /**
@@ -57,7 +59,7 @@ void waitForJob(JobHandle job) {
  * @param state State to update.
  */
 void getJobState(JobHandle job, JobState* state) {
-	auto jobContext = (JobContext*) job;
+	auto jobContext = (JobContext *) job;
 	jobContext->updateState();
 	*state = jobContext->jobState;
 }
@@ -70,7 +72,9 @@ void getJobState(JobHandle job, JobState* state) {
  * @param job A running job.
  */
 void closeJobHandle(JobHandle job) {
-
+    waitForJob(job);
+    auto *jobContext = (JobContext *) job;
+    delete jobContext;
 }
 
 /**
@@ -87,6 +91,7 @@ void emit2 (K2* key, V2* value, void* context) {
     auto threadContext = (ThreadContext *) context;
     IntermediatePair intermediatePair(key, value);
     threadContext->storeMapResult(intermediatePair);
+    // TODO count total jobs?
 }
 
 /**
@@ -100,9 +105,9 @@ void emit2 (K2* key, V2* value, void* context) {
  * @param context Contains data structure of the thread that created the output element.
  */
 void emit3 (K3* key, V3* value, void* context) {
-    auto *threadJob = (JobContext *) context;
+    auto *jobContext = (JobContext *) context;
     OutputPair outputPair(key, value);
+    jobContext->storeReduceResult(outputPair);
+    // TODO count total jobs?
 
-    // TODO mutex ?
-    threadJob->storeReduceResult(outputPair);
 }
