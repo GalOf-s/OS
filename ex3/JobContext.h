@@ -44,6 +44,7 @@ public:
 
     void joinThreads();
 
+	std::atomic<uint64_t> atomicProgressTracker{};
 private:
     int _multiThreadLevel;
     const MapReduceClient *_mapReduceClient;
@@ -52,8 +53,7 @@ private:
     std::vector<ThreadContext> _threadContexts;
     std::vector<IntermediateVec> _shuffleVec;
     std::atomic<int> _atomic_nextIndex{};
-    std::atomic<uint64_t> _atomic_progressTracker{};
-    bool _isWaitForJobCalled;
+	bool _isWaitForJobCalled;
     pthread_mutex_t _mutex_waitForJob{};
     pthread_mutex_t _mutex_saveOutput{};
     sem_t *_sem_reducePhase{};
@@ -88,6 +88,11 @@ private:
 
 
     K2 *_getMaxKey();
+
+	int _getTotalWork();
+	int _shuffleStageTotalWork = -1;
+
+	int _calcShuffleStageTotalWork();
 };
 
 

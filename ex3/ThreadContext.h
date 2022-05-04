@@ -20,6 +20,7 @@ public:
     K2* getMaxKey();
 
     bool isIntermediateVecEmpty();
+	int getIntermediateVecSize(){return _intermediateVec.size();}
 
 private:
     int _id;

@@ -6,6 +6,11 @@
 #define SYSTEM_ERROR "system error: "
 #define MEMORY_ALLOCATION_ERROR "failed to allocate memory."
 
+typedef struct {
+	ThreadContext* threadContext;
+	JobContext* jobContext;
+} emit2Context;
+
 void systemError(const std::string &string) {
     std::cerr << SYSTEM_ERROR + string << std::endl;
     exit(EXIT_FAILURE);
@@ -88,10 +93,10 @@ void closeJobHandle(JobHandle job) {
  * @param context Contains data structure of the thread that created the intermediary element.
  */
 void emit2 (K2* key, V2* value, void* context) {
-    auto threadContext = (ThreadContext *) context;
+    auto contexts = (emit2Context* ) context;
     IntermediatePair intermediatePair(key, value);
-    threadContext->storeMapResult(intermediatePair);
-    // TODO count total jobs?
+	contexts->threadContext->storeMapResult(intermediatePair);
+	contexts->jobContext->atomicProgressTracker ++;
 }
 
 /**
@@ -108,6 +113,7 @@ void emit3 (K3* key, V3* value, void* context) {
     auto *jobContext = (JobContext *) context;
     OutputPair outputPair(key, value);
     jobContext->storeReduceResult(outputPair);
-    // TODO count total jobs?
+    jobContext->atomicProgressTracker++;
+	// TODO count total jobs?
 
 }
