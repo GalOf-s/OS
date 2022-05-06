@@ -31,7 +31,7 @@ JobContext::JobContext(int multiThreadLevel,
     _initSaveOutputMutex();
     _initReduceSem(); // TODO check if semaphore is needed
     _memoryAllocation();
-    _threadContexts = std::vector<ThreadContext>(multiThreadLevel);
+    _threadContexts = std::vector<ThreadContext>();
 	_createThreads();
 }
 
@@ -45,7 +45,9 @@ void JobContext::_memoryAllocation() { // TODO better method name? (:
 }
 
 void JobContext::_createThreads() {
+    _threadContexts.reserve(_multiThreadLevel);
     for (int i = 0; i < _multiThreadLevel; i++) {
+        _threadContexts.emplace_back(i);
         _threadContexts[i] = ThreadContext(i);
         auto jobPair = std::make_pair(this, i);
         if (pthread_create(_threads + i,
