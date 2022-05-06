@@ -2,7 +2,6 @@
 #define EX3_THREADCONTEXT_H
 
 #include "MapReduceFramework.h"
-#include "MapReduceFramework.cpp"
 
 class ThreadContext
 {

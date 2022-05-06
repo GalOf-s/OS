@@ -8,8 +8,15 @@
 #include <atomic>
 #include <semaphore.h>
 #include <pthread.h>
+#include <vector>
 #include <iostream>
 
+#define NEXT_INDEX_OFFSET 31
+#define STAGE_OFFSET 62
+
+#define COMPLETED_COUNT_MASK 0x7fffffff // first 31 bit store the number of already processed keys
+#define NEXT_INDEX_MASK 0x3fffffff80000000 // second 31 bit store the next index to process in the input vector
+#define STAGE_MASK 0x3fffffffffffffff // last  2 bits to flag the stage
 
 #define SYSTEM_ERROR "system error: "
 #define PTHREAD_CREATE_ERROR "pthread create failed."
@@ -23,11 +30,18 @@
 #define SEM_POST_ERROR "semaphore post failed."
 #define SEM_DESTROY_ERROR "semaphore destroy failed."
 #define PTHREAD_JOIN_ERROR "pthread join failed."
+#define UNDEFINED_TOTAL_WORK -1
+
 
 
 class JobContext {
 
 public:
+    typedef struct {
+        ThreadContext* threadContext;
+        JobContext* jobContext;
+    } emit2Context;
+
 
     JobContext(int multiThreadLevel,
                const MapReduceClient *client,
@@ -47,12 +61,13 @@ public:
 	std::atomic<uint64_t> atomicProgressTracker{};
 private:
     int _multiThreadLevel;
+    int _shuffleStageTotalWork;
     const MapReduceClient *_mapReduceClient;
     const InputVec *_inputVec;
     OutputVec *_outputVec;
     std::vector<ThreadContext> _threadContexts;
     std::vector<IntermediateVec> _shuffleVec;
-    std::atomic<int> _atomic_nextIndex{};
+//    std::atomic<int> _atomic_nextIndex{};
 	bool _isWaitForJobCalled;
     pthread_mutex_t _mutex_waitForJob{};
     pthread_mutex_t _mutex_saveOutput{};
@@ -89,10 +104,9 @@ private:
 
     K2 *_getMaxKey();
 
-	int _getTotalWork();
-	int _shuffleStageTotalWork = -1;
+    unsigned long _getTotalWork();
 
-	int _calcShuffleStageTotalWork();
+    unsigned long _calcShuffleStageTotalWork();
 };
 
 
