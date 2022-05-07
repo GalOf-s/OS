@@ -45,3 +45,5 @@ ex2/uthreads/makefile example
 ex3/Resources/
 
 ex3/cmake-build-debug/
+ex3/cmake-build-debug-local/
+ex3/cmake-build-debug-remote/
