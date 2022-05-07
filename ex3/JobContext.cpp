@@ -25,6 +25,7 @@ JobContext::JobContext(int multiThreadLevel,
 
     _shuffleStageTotalWork = UNDEFINED_TOTAL_WORK;
     atomicProgressTracker = 0;
+	atomicIntermediatePairsCount = 0;
 	jobState = {UNDEFINED_STAGE, 0};
     _isWaitForJobCalled = false;
     _initWaitForJobMutex();
@@ -144,7 +145,7 @@ void JobContext::_mapPhase(ThreadContext *threadContext)
         InputPair nextPair = _inputVec->at(inputVectorIndex);
         _mapReduceClient->map(nextPair.first, nextPair.second, &mapContext);
 		atomicProgressTracker += ((u_int64_t) 1 << NEXT_INDEX_OFFSET);
-//        inputVectorIndex = (_atomic_nextIndex)++;
+        atomicProgressTracker++; // update count of completed input pairs
     }
 }
 
@@ -279,7 +280,7 @@ unsigned long JobContext::_getTotalWork(){
 			return _inputVec->size();
 		case SHUFFLE_STAGE:
 		case REDUCE_STAGE:
-			return _calcShuffleStageTotalWork();
+			return atomicIntermediatePairsCount.load();
 	}
 }
 

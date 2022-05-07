@@ -92,7 +92,7 @@ void emit2 (K2* key, V2* value, void* context) {
     auto contexts = (JobContext::emit2Context *) context;
     IntermediatePair intermediatePair(key, value);
 	contexts->threadContext->storeMapResult(intermediatePair);
-	contexts->jobContext->atomicProgressTracker++;
+	contexts->jobContext->atomicIntermediatePairsCount++;
 }
 
 /**

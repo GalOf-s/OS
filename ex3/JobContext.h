@@ -59,6 +59,7 @@ public:
     void joinThreads();
 
 	std::atomic<uint64_t> atomicProgressTracker{};
+	std::atomic<int> atomicIntermediatePairsCount{};
 private:
     int _multiThreadLevel;
     int _shuffleStageTotalWork;
