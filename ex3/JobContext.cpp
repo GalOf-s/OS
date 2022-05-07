@@ -78,7 +78,7 @@ void JobContext::_initSaveOutputMutex() {
 
 
 void JobContext::_initReduceSem() {
-    if (sem_init(_sem_reducePhase, 0, 0) != 0) {
+    if (sem_init(&_sem_reducePhase, 0, 0) != 0) {
         std::cerr << SYSTEM_ERROR << SEM_INIT_ERROR << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -97,7 +97,7 @@ void *JobContext::_run(void *inputThreadContext)
 
 		atomicProgressTracker = ((uint64_t) REDUCE_STAGE) << STAGE_OFFSET;
 //        _atomic_nextIndex = 0;
-        _wakeUpThreads();
+        _wakeUpThreads(_sem_reducePhase);
     } else { // TODO: how to make sure this is executed before wake up?
         _reduceSemDown(); // TODO can barrier can be done instead of a semaphore?
     }
@@ -106,15 +106,15 @@ void *JobContext::_run(void *inputThreadContext)
 }
 
 void JobContext::_reduceSemDown() {
-    if (sem_wait(_sem_reducePhase) != 0) {
+    if (sem_wait(&_sem_reducePhase) != 0) {
         std::cerr << SYSTEM_ERROR << SEM_DOWN_ERROR << std::endl;
         exit(EXIT_FAILURE);
     }
 }
 
-void JobContext::_wakeUpThreads() const {
+void JobContext::_wakeUpThreads(sem_t &sem) const {
     for (int i = 0; i < _multiThreadLevel; ++i) {
-        if (sem_post(_sem_reducePhase) != 0) {
+        if (sem_post(&sem) != 0) {
             std::cerr << SYSTEM_ERROR << SEM_POST_ERROR << std::endl;
             exit(EXIT_FAILURE);
         }
@@ -123,11 +123,11 @@ void JobContext::_wakeUpThreads() const {
 
 void JobContext::_mapPhase(ThreadContext *threadContext)
 {
-	if(atomicProgressTracker < (((uint64_t) MAP_STAGE) << STAGE_OFFSET)) {
-		atomicProgressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
-	}
+//	if(atomicProgressTracker < (((uint64_t) MAP_STAGE) << STAGE_OFFSET)) {
+//		atomicProgressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
+//	}
 
-//    atomicProgressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
+    atomicProgressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
     unsigned long inputVectorIndex = getNextIndex(atomicProgressTracker += 1 << NEXT_INDEX_OFFSET) - 1;
 //    int inputVectorIndex = (_atomic_nextIndex)++;
 	emit2Context mapContext = {threadContext, this};
@@ -228,11 +228,11 @@ void JobContext::_systemError(const std::string &string) {
 }
 
 unsigned long JobContext::getNextIndex(uint64_t progressTrackerValue){
-	return progressTrackerValue & (NEXT_INDEX_MASK);
+	return (progressTrackerValue & NEXT_INDEX_MASK) >> NEXT_INDEX_OFFSET;
 }
 
 unsigned long JobContext::getCompletedCount(u_int64_t progressTrackerValue){
-    return progressTrackerValue & (COMPLETED_COUNT_MASK);
+    return progressTrackerValue & COMPLETED_COUNT_MASK;
 }
 
 //unsigned long JobContext::getTotalCount(uint64_t progressTrackerValue){
@@ -240,7 +240,7 @@ unsigned long JobContext::getCompletedCount(u_int64_t progressTrackerValue){
 //}
 
 unsigned long JobContext::getState(uint64_t progressTrackerValue){
-	return progressTrackerValue & (STAGE_MASK);
+	return (progressTrackerValue & STAGE_MASK) >> STAGE_OFFSET;
 }
 
 void JobContext::updateState()
@@ -298,7 +298,7 @@ void JobContext::_destroyMutex(pthread_mutex_t &mutex) {
 }
 
 void JobContext::_destroySem() {
-    if (sem_destroy(_sem_reducePhase) < 0) {
+    if (sem_destroy(&_sem_reducePhase) < 0) {
         std::cerr << SYSTEM_ERROR << SEM_DESTROY_ERROR << std::endl;
         exit(EXIT_FAILURE);
     }

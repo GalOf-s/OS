@@ -41,6 +41,8 @@ endif()
 
 #######################################
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
 add_executable(mattanTester SampleClient.cpp)
 target_include_directories(mattanTester PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
 target_link_libraries(mattanTester PRIVATE MapReduceFramework gtest_main)

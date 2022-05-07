@@ -16,7 +16,7 @@
 
 #define COMPLETED_COUNT_MASK 0x7fffffff // first 31 bit store the number of already processed keys
 #define NEXT_INDEX_MASK 0x3fffffff80000000 // second 31 bit store the next index to process in the input vector
-#define STAGE_MASK 0x3fffffffffffffff // last  2 bits to flag the stage
+#define STAGE_MASK 0xC000000000000000 // last  2 bits to flag the stage
 
 #define SYSTEM_ERROR "system error: "
 #define PTHREAD_CREATE_ERROR "pthread create failed."
@@ -71,7 +71,7 @@ private:
 	bool _isWaitForJobCalled;
     pthread_mutex_t _mutex_waitForJob{};
     pthread_mutex_t _mutex_saveOutput{};
-    sem_t *_sem_reducePhase{};
+    sem_t _sem_reducePhase{};
     pthread_t *_threads{};
     Barrier *_barrier{};
     static void _systemError(const std::string &string);
@@ -99,7 +99,8 @@ private:
 
     void _destroySem();
 
-    void _wakeUpThreads() const;
+//    void _wakeUpThreads() const;
+    void _wakeUpThreads(sem_t &sem) const;
 
 
     K2 *_getMaxKey();
