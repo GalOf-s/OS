@@ -29,6 +29,7 @@ JobContext::JobContext(int multiThreadLevel,
     _isWaitForJobCalled = false;
     _initWaitForJobMutex();
     _initSaveOutputMutex();
+	_initUpdateStateMutex();
     _initReduceSem(); // TODO check if semaphore is needed
     _memoryAllocation();
     _threadContexts = std::vector<ThreadContext>();
@@ -76,6 +77,11 @@ void JobContext::_initSaveOutputMutex() {
     }
 }
 
+void JobContext::_initUpdateStateMutex() {
+	if (pthread_mutex_init(&_mutex_updateState, nullptr) != 0) {
+		_systemError(PTHREAD_MUTEX_INIT_ERROR);
+	}
+}
 
 void JobContext::_initReduceSem() {
     if (sem_init(&_sem_reducePhase, 0, 0) != 0) {
@@ -123,18 +129,21 @@ void JobContext::_wakeUpThreads(sem_t &sem) const {
 
 void JobContext::_mapPhase(ThreadContext *threadContext)
 {
-//	if(atomicProgressTracker < (((uint64_t) MAP_STAGE) << STAGE_OFFSET)) {
-//		atomicProgressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
-//	}
+	_lockMutex(_mutex_updateState);
+	if(atomicProgressTracker.load() < (((uint64_t) MAP_STAGE) << STAGE_OFFSET)) {
+		atomicProgressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
+	}
+	_unlockMutex(_mutex_updateState);
 
-    atomicProgressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
-    unsigned long inputVectorIndex = getNextIndex(atomicProgressTracker += 1 << NEXT_INDEX_OFFSET) - 1;
+//    atomicProgressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
+    unsigned long inputVectorIndex = getNextIndex(atomicProgressTracker += ((u_int64_t) 1 <<
+			NEXT_INDEX_OFFSET)) - 1;
 //    int inputVectorIndex = (_atomic_nextIndex)++;
 	emit2Context mapContext = {threadContext, this};
     while(inputVectorIndex < _inputVec->size()) {
         InputPair nextPair = _inputVec->at(inputVectorIndex);
         _mapReduceClient->map(nextPair.first, nextPair.second, &mapContext);
-		atomicProgressTracker += 1 << NEXT_INDEX_OFFSET;
+		atomicProgressTracker += ((u_int64_t) 1 << NEXT_INDEX_OFFSET);
 //        inputVectorIndex = (_atomic_nextIndex)++;
     }
 }

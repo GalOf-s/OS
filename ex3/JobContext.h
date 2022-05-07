@@ -71,6 +71,7 @@ private:
 	bool _isWaitForJobCalled;
     pthread_mutex_t _mutex_waitForJob{};
     pthread_mutex_t _mutex_saveOutput{};
+    pthread_mutex_t _mutex_updateState{};
     sem_t _sem_reducePhase{};
     pthread_t *_threads{};
     Barrier *_barrier{};
@@ -108,6 +109,8 @@ private:
     unsigned long _getTotalWork();
 
     unsigned long _calcShuffleStageTotalWork();
+
+	void _initUpdateStateMutex();
 };
 
 
