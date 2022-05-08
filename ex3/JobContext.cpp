@@ -1,14 +1,7 @@
 #include "JobContext.h"
 #include <vector>
+#include <pthread.h>
 
-
-
-//#define TOTAL_COUNT_OFFSET 31
-//#define STAGE_OFFSET 62
-//
-//#define COMPLETED_COUNT_MASK 0x7fffffff // first 31 bit store the number of already processed keys
-//#define TOTAL_COUNT_MASK 0x3fffffff80000000 // second 31 bit store number of total keys to process
-//#define STAGE_MASK 0x3fffffffffffffff // last  2 bits to flag the stage
 
 
 
@@ -20,12 +13,12 @@ JobContext::JobContext(int multiThreadLevel,
     _mapReduceClient = client;
     _inputVec = inputVec;
     _outputVec = outputVec;
-//    _atomic_nextIndex = 0;
-//    atomicProgressTracker = _inputVec->size() << TOTAL_COUNT_OFFSET;
+    _atomic_nextIndex = 0;
+    atomicProgressTracker = _inputVec->size() << TOTAL_COUNT_OFFSET;
 
     _shuffleStageTotalWork = UNDEFINED_TOTAL_WORK;
     atomicProgressTracker = 0;
-	atomicIntermediatePairsCount = 0;
+    atomicTotalPairsCount = 0;
 	jobState = {UNDEFINED_STAGE, 0};
     _isWaitForJobCalled = false;
     _initWaitForJobMutex();
@@ -50,7 +43,6 @@ void JobContext::_createThreads() {
     _threadContexts.reserve(_multiThreadLevel);
     for (int i = 0; i < _multiThreadLevel; i++) {
         _threadContexts.emplace_back(i);
-        _threadContexts[i] = ThreadContext(i);
         auto jobPair = std::make_pair(this, i);
         if (pthread_create(_threads + i,
                            nullptr,
@@ -99,11 +91,12 @@ void *JobContext::_run(void *inputThreadContext)
     _barrier->barrier();
 
     if(threadContext->getId() == 0) {
-		atomicProgressTracker = ((uint64_t) SHUFFLE_STAGE) << STAGE_OFFSET;
+		atomicProgressTracker = (((uint64_t) SHUFFLE_STAGE) << STAGE_OFFSET) + (atomicTotalPairsCount << TOTAL_COUNT_OFFSET);
         _shufflePhase();
 
-		atomicProgressTracker = ((uint64_t) REDUCE_STAGE) << STAGE_OFFSET;
-//        _atomic_nextIndex = 0;
+		atomicProgressTracker = (((uint64_t) REDUCE_STAGE) << STAGE_OFFSET) + (atomicTotalPairsCount << TOTAL_COUNT_OFFSET);
+        atomicTotalPairsCount = 0;
+        _atomic_nextIndex = 0;
         _wakeUpThreads(_sem_reducePhase);
     } else { // TODO: how to make sure this is executed before wake up?
         _reduceSemDown(); // TODO can barrier can be done instead of a semaphore?
@@ -132,19 +125,21 @@ void JobContext::_mapPhase(ThreadContext *threadContext)
 {
 	_lockMutex(_mutex_updateState);
 	if(atomicProgressTracker.load() < (((uint64_t) MAP_STAGE) << STAGE_OFFSET)) {
-		atomicProgressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
+		atomicProgressTracker = ((uint64_t) MAP_STAGE << STAGE_OFFSET);
 	}
-	_unlockMutex(_mutex_updateState);
+    _unlockMutex(_mutex_updateState);
 
-//    atomicProgressTracker = ((uint64_t) MAP_STAGE) << STAGE_OFFSET;
-    unsigned long inputVectorIndex = getNextIndex(atomicProgressTracker += ((u_int64_t) 1 <<
-			NEXT_INDEX_OFFSET)) - 1;
-//    int inputVectorIndex = (_atomic_nextIndex)++;
-	emit2Context mapContext = {threadContext, this};
-    while(inputVectorIndex < _inputVec->size()) {
+
+//    unsigned long inputVectorIndex = getNextIndex(atomicProgressTracker +=  + ((uint64_t) 1 << NEXT_INDEX_OFFSET)) - 1;
+    unsigned long inputVectorIndex = (_atomic_nextIndex)++;
+    unsigned long inputVectorLength = _inputVec->size();
+    while(inputVectorIndex < inputVectorLength) {
         InputPair nextPair = _inputVec->at(inputVectorIndex);
+        emit2Context mapContext = {threadContext, this};
         _mapReduceClient->map(nextPair.first, nextPair.second, &mapContext);
-		atomicProgressTracker += ((u_int64_t) 1 << NEXT_INDEX_OFFSET);
+//        inputVectorIndex = getNextIndex(atomicProgressTracker +=  + ((uint64_t) 1 << NEXT_INDEX_OFFSET)) - 1;
+        inputVectorIndex = (_atomic_nextIndex)++;
+//        std::cout << inputVectorIndex << std::endl;
         atomicProgressTracker++; // update count of completed input pairs
     }
 }
@@ -187,11 +182,11 @@ void JobContext::_shufflePhase() {
 
 
 K2* JobContext::_getMaxKey() {
-    K2* maxKey;
+    K2* maxKey = nullptr;
     for (auto & _threadContext : _threadContexts){
         if (!_threadContext.isIntermediateVecEmpty() && (maxKey == nullptr || *maxKey < *_threadContext.getMaxKey()))
         {
-            *maxKey = *_threadContext.getMaxKey();
+            maxKey = _threadContext.getMaxKey();
         }
     }
     return maxKey;
@@ -201,7 +196,7 @@ K2* JobContext::_getMaxKey() {
 IntermediateVec JobContext::_getMaxVec(K2 *maxKey) {
     IntermediateVec maxVec;
     for (auto & _threadContext : _threadContexts){
-        while(!_threadContext.isIntermediateVecEmpty()  && _equalKeys(maxKey, _threadContext.getMaxKey())) {
+        while(!_threadContext.isIntermediateVecEmpty()  && !(*_threadContext.getMaxKey() < *maxKey)) {
             maxVec.push_back(_threadContext.getMaxPair());
         }
     }
@@ -213,14 +208,17 @@ bool JobContext::_equalKeys(K2 *firstKey, K2 *secondKey) {
 }
 
 void JobContext::_reducePhase() {
-    unsigned long shuffleVectorIndex = getNextIndex(atomicProgressTracker += 1 << NEXT_INDEX_OFFSET) - 1;
-//    int shuffleVectorIndex = (_atomic_nextIndex)++;
-    while(shuffleVectorIndex < _shuffleVec.size()) {
+//    unsigned long shuffleVectorIndex = getNextIndex(atomicProgressTracker += 1 << NEXT_INDEX_OFFSET) - 1;
+    unsigned long shuffleVectorIndex = (_atomic_nextIndex)++;
+    unsigned long shuffleVectorLength = _shuffleVec.size();
+
+    while(shuffleVectorIndex < shuffleVectorLength) {
         IntermediateVec nextVec = _shuffleVec.at(shuffleVectorIndex);
         _mapReduceClient->reduce(&nextVec,  this);
 		atomicProgressTracker += nextVec.size();
-		atomicProgressTracker += 1 << NEXT_INDEX_OFFSET;
-//        shuffleVectorIndex = (_atomic_nextIndex)++;
+        shuffleVectorIndex = (_atomic_nextIndex)++;
+//        shuffleVectorIndex = getNextIndex(atomicProgressTracker += 1 << NEXT_INDEX_OFFSET) - 1;
+
     }
 
 	
@@ -237,17 +235,17 @@ void JobContext::_systemError(const std::string &string) {
     exit(EXIT_FAILURE);
 }
 
-unsigned long JobContext::getNextIndex(uint64_t progressTrackerValue){
-	return (progressTrackerValue & NEXT_INDEX_MASK) >> NEXT_INDEX_OFFSET;
-}
+//unsigned long JobContext::getNextIndex(uint64_t progressTrackerValue){
+//	return (progressTrackerValue & NEXT_INDEX_MASK) >> NEXT_INDEX_OFFSET;
+//}
 
 unsigned long JobContext::getCompletedCount(u_int64_t progressTrackerValue){
     return progressTrackerValue & COMPLETED_COUNT_MASK;
 }
 
-//unsigned long JobContext::getTotalCount(uint64_t progressTrackerValue){
-//    return progressTrackerValue & (TOTAL_COUNT_MASK);
-//}
+unsigned long JobContext::getTotalCount(uint64_t progressTrackerValue){
+    return (progressTrackerValue & TOTAL_COUNT_MASK) >> TOTAL_COUNT_OFFSET;
+}
 
 unsigned long JobContext::getState(uint64_t progressTrackerValue){
 	return (progressTrackerValue & STAGE_MASK) >> STAGE_OFFSET;
@@ -258,11 +256,11 @@ void JobContext::updateState()
 	uint64_t currProgressTrackerValue = atomicProgressTracker.load(); // TODO: should it be protected by lock
 	jobState.stage = stage_t(getState(currProgressTrackerValue));
 	unsigned long completed = getCompletedCount(currProgressTrackerValue);
-    unsigned long totalWork = _getTotalWork();
+    unsigned long totalWork = getTotalCount(currProgressTrackerValue);
     if(!totalWork) { // total work is 0
         jobState.percentage = 0;
     } else {
-        jobState.percentage = 100 * (float) completed / (float) totalWork;
+        jobState.percentage = (float ) 100 * (float)  completed / (float) totalWork;
 
     }
 //    unsigned long total = getTotalCount(currProgressTrackerValue);
@@ -280,7 +278,7 @@ unsigned long JobContext::_getTotalWork(){
 			return _inputVec->size();
 		case SHUFFLE_STAGE:
 		case REDUCE_STAGE:
-			return atomicIntermediatePairsCount.load();
+			return atomicTotalPairsCount.load();
 	}
 }
 
@@ -317,6 +315,7 @@ void JobContext::_destroySem() {
 JobContext::~JobContext() {
     _destroyMutex(_mutex_saveOutput);
     _destroyMutex(_mutex_waitForJob);
+    _destroyMutex(_mutex_updateState);
     _destroySem();
     delete _barrier;
     delete[] _threads;

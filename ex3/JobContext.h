@@ -10,13 +10,24 @@
 #include <pthread.h>
 #include <vector>
 #include <iostream>
+//
+//#define NEXT_INDEX_OFFSET 31
+//#define STAGE_OFFSET 62
+//
+//#define COMPLETED_COUNT_MASK 0x7fffffff // first 31 bit store the number of already processed keys
+//#define NEXT_INDEX_MASK 0x3fffffff80000000 // second 31 bit store the next index to process in the input vector
+//#define STAGE_MASK 0xC000000000000000 // last  2 bits to flag the stage
 
-#define NEXT_INDEX_OFFSET 31
+
+#define TOTAL_COUNT_OFFSET 31
 #define STAGE_OFFSET 62
 
 #define COMPLETED_COUNT_MASK 0x7fffffff // first 31 bit store the number of already processed keys
-#define NEXT_INDEX_MASK 0x3fffffff80000000 // second 31 bit store the next index to process in the input vector
+#define TOTAL_COUNT_MASK 0x3fffffff80000000 // second 31 bit store number of total keys to process
 #define STAGE_MASK 0xC000000000000000 // last  2 bits to flag the stage
+
+
+
 
 #define SYSTEM_ERROR "system error: "
 #define PTHREAD_CREATE_ERROR "pthread create failed."
@@ -59,7 +70,7 @@ public:
     void joinThreads();
 
 	std::atomic<uint64_t> atomicProgressTracker{};
-	std::atomic<int> atomicIntermediatePairsCount{};
+	std::atomic<unsigned long> atomicTotalPairsCount{};
 private:
     int _multiThreadLevel;
     int _shuffleStageTotalWork;
@@ -68,7 +79,7 @@ private:
     OutputVec *_outputVec;
     std::vector<ThreadContext> _threadContexts;
     std::vector<IntermediateVec> _shuffleVec;
-//    std::atomic<int> _atomic_nextIndex{};
+    std::atomic<unsigned long> _atomic_nextIndex{};
 	bool _isWaitForJobCalled;
     pthread_mutex_t _mutex_waitForJob{};
     pthread_mutex_t _mutex_saveOutput{};
@@ -82,7 +93,7 @@ private:
     static void _destroyMutex(pthread_mutex_t &mutex);
     static bool _equalKeys(K2 *firstKey, K2 *secondKey);
     static unsigned long getCompletedCount(uint64_t progressTrackerValue);
-//    static unsigned long getTotalCount(uint64_t progressTrackerValue);
+    static unsigned long getTotalCount(uint64_t progressTrackerValue);
     static unsigned long getState(uint64_t progressTrackerValue);
      static unsigned long getNextIndex(u_int64_t progressTrackerValue);
 

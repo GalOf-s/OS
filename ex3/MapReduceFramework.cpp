@@ -90,9 +90,9 @@ void closeJobHandle(JobHandle job) {
  */
 void emit2 (K2* key, V2* value, void* context) {
     auto contexts = (JobContext::emit2Context *) context;
-    IntermediatePair intermediatePair(key, value);
+    IntermediatePair intermediatePair({key, value});
 	contexts->threadContext->storeMapResult(intermediatePair);
-	contexts->jobContext->atomicIntermediatePairsCount++;
+	contexts->jobContext->atomicTotalPairsCount++; // These are the total amount of pairs in the shuffle and reduce stages
 }
 
 /**
@@ -110,6 +110,5 @@ void emit3 (K3* key, V3* value, void* context) {
     OutputPair outputPair(key, value);
     jobContext->storeReduceResult(outputPair);
     jobContext->atomicProgressTracker++;
-	// TODO count total jobs?
 
 }

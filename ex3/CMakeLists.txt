@@ -28,7 +28,7 @@ add_library(MapReduceFramework
         Barrier.cpp Barrier.h ThreadContext.h ThreadContext.cpp JobContext.cpp JobContext.h
         )
 
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 set_property(TARGET MapReduceFramework PROPERTY CXX_STANDARD 11)
 target_compile_options(MapReduceFramework PUBLIC -Wall -Wextra)
 target_include_directories(MapReduceFramework PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
