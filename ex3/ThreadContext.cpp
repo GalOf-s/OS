@@ -5,6 +5,7 @@
 ThreadContext::ThreadContext(int id)
 {
 	_id = id;
+	_intermediateVec = new IntermediateVec();
 }
 
 bool pairComparer(IntermediatePair pair1, IntermediatePair pair2){
@@ -13,7 +14,7 @@ bool pairComparer(IntermediatePair pair1, IntermediatePair pair2){
 
 void ThreadContext::sortPhase()
 {
-    std::sort(this->_intermediateVec.begin(), this->_intermediateVec.end(), pairComparer);
+    std::sort(this->_intermediateVec->begin(), this->_intermediateVec->end(), pairComparer);
 }
 
 int ThreadContext::getId() const {
@@ -21,17 +22,21 @@ int ThreadContext::getId() const {
 }
 
 IntermediatePair ThreadContext::getMaxPair() {
-    IntermediatePair currentMaxPair = _intermediateVec.back();
-    _intermediateVec.pop_back();
+    IntermediatePair currentMaxPair = _intermediateVec->back();
+    _intermediateVec->pop_back();
     return currentMaxPair;
 }
 
 K2* ThreadContext::getMaxKey(){
-    return _intermediateVec.back().first;
+    return _intermediateVec->back().first;
 }
 
 bool ThreadContext::isIntermediateVecEmpty() {
-    return _intermediateVec.empty();
+    return _intermediateVec->empty();
+}
+
+void ThreadContext::storeMapResult(IntermediatePair* intermediatePair) {
+	_intermediateVec->push_back(*intermediatePair);
 }
 
 

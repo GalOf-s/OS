@@ -30,10 +30,10 @@ JobHandle startMapReduceJob (const MapReduceClient& client,
                              int multiThreadLevel) {
 	JobContext *jobContext;
     try{
-        jobContext = static_cast<JobContext *>(new JobContext(multiThreadLevel,
-															  &client,
-															  &inputVec,
-                                                              &outputVec));
+        jobContext = new JobContext(multiThreadLevel,
+									&client,
+									&inputVec,
+									&outputVec);
     } catch (std::bad_alloc &) {
         systemError(MEMORY_ALLOCATION_ERROR);
     }
@@ -90,8 +90,7 @@ void closeJobHandle(JobHandle job) {
  */
 void emit2 (K2* key, V2* value, void* context) {
     auto contexts = (JobContext::emit2Context *) context;
-    IntermediatePair intermediatePair(key, value);
-	contexts->threadContext->storeMapResult(intermediatePair);
+	contexts->threadContext->storeMapResult(new IntermediatePair(key, value));
 	contexts->jobContext->atomicIntermediatePairsCount++;
 }
 

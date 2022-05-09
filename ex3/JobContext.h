@@ -66,7 +66,7 @@ private:
     const MapReduceClient *_mapReduceClient;
     const InputVec *_inputVec;
     OutputVec *_outputVec;
-    std::vector<ThreadContext> _threadContexts;
+    std::vector<ThreadContext*>* _threadContexts;
     std::vector<IntermediateVec> _shuffleVec;
 //    std::atomic<int> _atomic_nextIndex{};
 	bool _isWaitForJobCalled;
@@ -74,7 +74,7 @@ private:
     pthread_mutex_t _mutex_saveOutput{};
     pthread_mutex_t _mutex_updateState{};
     sem_t _sem_reducePhase{};
-    pthread_t *_threads{};
+    pthread_t *_threads;
     Barrier *_barrier{};
     static void _systemError(const std::string &string);
     static void _lockMutex(pthread_mutex_t &mutex); // TODO check if needed more mutex, if not needed delete arg
@@ -112,6 +112,8 @@ private:
     unsigned long _calcShuffleStageTotalWork();
 
 	void _initUpdateStateMutex();
+
+	void *_run(int threadId);
 };
 
 

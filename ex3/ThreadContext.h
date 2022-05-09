@@ -9,7 +9,7 @@ public:
     explicit ThreadContext(int id);
     int getId() const;
     void sortPhase();
-    void storeMapResult(IntermediatePair intermediatePair){_intermediateVec.push_back(intermediatePair);}
+    void storeMapResult(IntermediatePair* intermediatePair);
 //    static void _initSaveOutputMutex(pthread_mutex_t &mutex);
 //    static void _lockMutex(pthread_mutex_t &mutex);
 //    static void _unlockMutex(pthread_mutex_t &mutex);
@@ -19,11 +19,11 @@ public:
     K2* getMaxKey();
 
     bool isIntermediateVecEmpty();
-	int getIntermediateVecSize(){return _intermediateVec.size();}
+	int getIntermediateVecSize(){return _intermediateVec->size();}
 
 private:
     int _id;
-    IntermediateVec _intermediateVec;
+    IntermediateVec* _intermediateVec;
 
 //    int mapPhase();
 //    int shufflePhase();
