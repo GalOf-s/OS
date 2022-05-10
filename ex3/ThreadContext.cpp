@@ -2,36 +2,52 @@
 #include "ThreadContext.h"
 
 
-ThreadContext::ThreadContext(int id)
+ThreadContext::ThreadContext(int id, JobContext *jobContext)
 {
 	_id = id;
+    _intermediateVec = new IntermediateVec();
+    _jobContext = jobContext;
 }
 
-bool pairComparer(IntermediatePair pair1, IntermediatePair pair2){
-    return pair1.first < pair2.first;
+JobContext *ThreadContext::getJobContext(){
+    return _jobContext;
 }
 
-void ThreadContext::sortPhase()
+void ThreadContext::storeMapResult(IntermediatePair intermediatePair){
+    _intermediateVec->push_back(intermediatePair);
+}
+
+
+//bool pairComparer(IntermediatePair pair1, IntermediatePair pair2){
+//    return pair1.first < pair2.first;
+//}
+
+//void ThreadContext::sortPhase() const
+//{
+//    std::sort(_intermediateVec->begin(), _intermediateVec->end(), pairComparer);
+//}
+
+void ThreadContext::deleteIntermediateVec() const
 {
-    std::sort(this->_intermediateVec.begin(), this->_intermediateVec.end(), pairComparer);
+    delete _intermediateVec;
+}
+
+IntermediatePair ThreadContext::getMaxPair() const {
+    IntermediatePair currentMaxPair = _intermediateVec->back();
+    _intermediateVec->pop_back();
+    return currentMaxPair;
+}
+
+K2* ThreadContext::getMaxKey() const{
+    return _intermediateVec->back().first;
+}
+
+bool ThreadContext::isIntermediateVecEmpty() const {
+    return _intermediateVec->empty();
 }
 
 int ThreadContext::getId() const {
     return _id;
-}
-
-IntermediatePair ThreadContext::getMaxPair() {
-    IntermediatePair currentMaxPair = _intermediateVec.back();
-    _intermediateVec.pop_back();
-    return currentMaxPair;
-}
-
-K2* ThreadContext::getMaxKey(){
-    return _intermediateVec.back().first;
-}
-
-bool ThreadContext::isIntermediateVecEmpty() {
-    return _intermediateVec.empty();
 }
 
 

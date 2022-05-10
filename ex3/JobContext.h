@@ -44,15 +44,16 @@
 #define UNDEFINED_TOTAL_WORK -1
 
 
+class ThreadContext;
 
 class JobContext {
 
 public:
     typedef struct {
-        ThreadContext* threadContext;
+        //        ThreadContext* threadContext;
         JobContext* jobContext;
+        int threadID;
     } emit2Context;
-
 
     JobContext(int multiThreadLevel,
                const MapReduceClient *client,
@@ -67,20 +68,21 @@ public:
 
     bool wasWaitForJobCalled();
 
-    void joinThreads();
+    void joinThreads() const;
+    std::vector<ThreadContext *> *_threadContexts{};
 
-	std::atomic<uint64_t> atomicProgressTracker{};
-	std::atomic<unsigned long> atomicTotalPairsCount{};
-private:
+
+    std::atomic<uint64_t> atomicProgressTracker;
+    std::atomic<unsigned long> atomicTotalPairsCount;
     int _multiThreadLevel;
-    int _shuffleStageTotalWork;
+//    int _shuffleStageTotalWork;
     const MapReduceClient *_mapReduceClient;
     const InputVec *_inputVec;
     OutputVec *_outputVec;
-    std::vector<ThreadContext> _threadContexts;
-    std::vector<IntermediateVec> _shuffleVec;
+//    std::vector<ThreadContext *> *_threadContexts;
+    std::vector<IntermediateVec*> *_shuffleVec;
     std::atomic<unsigned long> _atomic_nextIndex{};
-	bool _isWaitForJobCalled;
+    bool _isWaitForJobCalled;
     pthread_mutex_t _mutex_waitForJob{};
     pthread_mutex_t _mutex_saveOutput{};
     pthread_mutex_t _mutex_updateState{};
@@ -91,38 +93,54 @@ private:
     static void _lockMutex(pthread_mutex_t &mutex); // TODO check if needed more mutex, if not needed delete arg
     static void _unlockMutex(pthread_mutex_t &mutex);
     static void _destroyMutex(pthread_mutex_t &mutex);
-    static bool _equalKeys(K2 *firstKey, K2 *secondKey);
+//    static bool _equalKeys(K2 *firstKey, K2 *secondKey);
     static unsigned long getCompletedCount(uint64_t progressTrackerValue);
     static unsigned long getTotalCount(uint64_t progressTrackerValue);
     static unsigned long getState(uint64_t progressTrackerValue);
-     static unsigned long getNextIndex(u_int64_t progressTrackerValue);
-
     void _memoryAllocation();
     void _initSaveOutputMutex();
     void _initWaitForJobMutex();
     void _initReduceSem();
-    void *_run(void *inputThreadContext);
+    void *_run(int threadID);
     void _mapPhase(ThreadContext *threadContext);
 //    void _incProgress();
     void _createThreads();
     void _shufflePhase();
-    IntermediateVec _getMaxVec(K2 *maxKey);
+    IntermediateVec _getMaxVec(K2 *maxKey) const;
     void _reducePhase();
     void _reduceSemDown();
 
-    void _destroySem();
+    void _destroySem() const;
 
 //    void _wakeUpThreads() const;
+
+
+    K2 *_getMaxKey() const;
+
+//    unsigned long _getTotalWork();
+
+//    unsigned long _calcShuffleStageTotalWork();
+
+    void _initUpdateStateMutex();
+
+//    void sortPhase(ThreadContext *threadContext);
+    IntermediateVec getMaxVec(K2 *maxKey) const;
+
+//    static unsigned long getNextIndex(u_int64_t progressTrackerValue);
+
+    K2 *getMaxKey() const;
+
+    void _destroyMutex(pthread_mutex_t *mutex);
+
+    void _unlockMutex(pthread_mutex_t *mutex);
+
+    void _lockMutex(pthread_mutex_t *mutex);
+
+    void _wakeUpThreads(sem_t *sem) const;
+
+    void _destroySem();
+
     void _wakeUpThreads(sem_t &sem) const;
-
-
-    K2 *_getMaxKey();
-
-    unsigned long _getTotalWork();
-
-    unsigned long _calcShuffleStageTotalWork();
-
-	void _initUpdateStateMutex();
 };
 
 

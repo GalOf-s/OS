@@ -2,33 +2,45 @@
 #define EX3_THREADCONTEXT_H
 
 #include "MapReduceFramework.h"
+#include "JobContext.h"
+#include <iostream>
+
+class JobContext;
 
 class ThreadContext
 {
 public:
-    explicit ThreadContext(int id);
-    int getId() const;
-    void sortPhase();
-    void storeMapResult(IntermediatePair intermediatePair){_intermediateVec.push_back(intermediatePair);}
+
+    ThreadContext(int id, JobContext *jobContext);
+
+    JobContext *getJobContext();
+    void sortPhase() const;
+    void storeMapResult(IntermediatePair intermediatePair);
 //    static void _initSaveOutputMutex(pthread_mutex_t &mutex);
 //    static void _lockMutex(pthread_mutex_t &mutex);
 //    static void _unlockMutex(pthread_mutex_t &mutex);
 //    static void _systemError(const std::string &string);
 
-    IntermediatePair getMaxPair();
-    K2* getMaxKey();
+    IntermediateVec *_intermediateVec;
 
-    bool isIntermediateVecEmpty();
-	int getIntermediateVecSize(){return _intermediateVec.size();}
+    IntermediatePair getMaxPair() const;
+    K2* getMaxKey() const;
 
-private:
-    int _id;
-    IntermediateVec _intermediateVec;
+    bool isIntermediateVecEmpty() const;
+    void deleteIntermediateVec() const;
 
+    int getId() const;
+
+//    IntermediateVec *_intermediateVec;
 //    int mapPhase();
 //    int shufflePhase();
 //    int reducePhase();
 	// int _progressCount;
+
+private:
+    int _id;
+    JobContext *_jobContext;
+
 };
 
 
