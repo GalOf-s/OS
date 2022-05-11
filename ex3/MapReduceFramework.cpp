@@ -133,8 +133,9 @@ void reducePhase(JobContext *jobContext) {
         IntermediateVec *nextVec = jobContext->_shuffleVec->at(shuffleVectorIndex);
         jobContext->_mapReduceClient->reduce(nextVec, jobContext);
         jobContext->atomicProgressTracker += nextVec->size();
-        std::cout << "size: " << nextVec->size() << std::endl;
-        shuffleVectorIndex = jobContext->_atomic_nextIndex++;
+//        std::cout << "size: " << nextVec->size() << std::endl;
+//		jobContext->atomicProgressTracker++;
+		shuffleVectorIndex = jobContext->_atomic_nextIndex++;
     }
 
 }
@@ -151,15 +152,15 @@ void *run(void *args)
     mapPhase(threadContext);
 //    threadContext->sortPhase();
     std::sort(threadContext->_intermediateVec->begin(), threadContext->_intermediateVec->end(), pairComparer);
-    std::cout << "size: " << threadContext->_intermediateVec->size() << std::endl;
+//    std::cout << "size: " << threadContext->_intermediateVec->size() << std::endl;
 
     jobContext->_barrier->barrier();
 
     if(threadContext->getId() == 0) {
         jobContext->atomicProgressTracker = (((uint64_t) SHUFFLE_STAGE) << STAGE_OFFSET) + (jobContext->atomicTotalPairsCount << TOTAL_COUNT_OFFSET);
-        std::cout<<"shuffling"<<std::endl;
+//        std::cout<<"shuffling"<<std::endl;
         shufflePhase(jobContext);
-        std::cout<<"finished shuffling"<<std::endl;
+//        std::cout<<"finished shuffling"<<std::endl;
 
         jobContext->_atomic_nextIndex = 0;
         jobContext->atomicProgressTracker = (((uint64_t) REDUCE_STAGE) << STAGE_OFFSET) + (jobContext->atomicTotalPairsCount << TOTAL_COUNT_OFFSET);
@@ -320,7 +321,4 @@ void emit3 (K3* key, V3* value, void* context) {
     lockMutex(jobContext->_mutex_saveOutput);
     jobContext->_outputVec->push_back({key, value});
     unlockMutex(jobContext->_mutex_saveOutput);
-
-    jobContext->atomicProgressTracker++;
-
 }
