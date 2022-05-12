@@ -1,4 +1,3 @@
-
 #ifndef EX3_JOBCONTEXT_H
 #define EX3_JOBCONTEXT_H
 
@@ -29,19 +28,15 @@
 
 
 
-#define SYSTEM_ERROR "system error: "
-#define PTHREAD_CREATE_ERROR "pthread create failed."
-#define MEMORY_ALLOCATION_ERROR "failed to allocate memory."
-#define PTHREAD_MUTEX_INIT_ERROR "pthread mutex init failed."
-#define PTHREAD_MUTEX_LOCK_ERROR "pthread mutex lock failed."
-#define PTHREAD_MUTEX_UNLOCK_ERROR "pthread mutex unlock failed."
-#define PTHREAD_MUTEX_DESTROY_ERROR "pthread mutex destroy failed."
-#define SEM_INIT_ERROR "semaphore initialization failed."
-#define SEM_DOWN_ERROR "semaphore down failed."
-#define SEM_POST_ERROR "semaphore post failed."
-#define SEM_DESTROY_ERROR "semaphore destroy failed."
+#define SYSTEM_ERROR_MSG "system error: "
+#define PTHREAD_CREATE_ERROR_MSG "pthread create failed."
+#define MEMORY_ALLOCATION_ERROR_MSG "failed to allocate memory."
+#define PTHREAD_MUTEX_INIT_ERROR_MSG "pthread mutex init failed."
+#define PTHREAD_MUTEX_LOCK_ERROR_MSG "pthread mutex lock failed."
+#define PTHREAD_MUTEX_UNLOCK_ERRO_MSG "pthread mutex unlock failed."
+#define PTHREAD_MUTEX_DESTROY_ERROR_MSG "pthread mutex destroy failed."
 #define PTHREAD_JOIN_ERROR "pthread join failed."
-#define UNDEFINED_TOTAL_WORK -1
+#define ROUND_FACTOR_PERCENTAGE 100.0
 
 
 class ThreadContext;
@@ -49,98 +44,133 @@ class ThreadContext;
 class JobContext {
 
 public:
-    typedef struct {
-        //        ThreadContext* threadContext;
-        JobContext* jobContext;
-        int threadID;
-    } emit2Context;
 
-    JobContext(int multiThreadLevel,
-               const MapReduceClient *client,
-               const InputVec *inputVec,
-               OutputVec *outputVec);
+    /**
+     * Constructor
+     */
+    JobContext(int multiThreadNum,
+                           const MapReduceClient *client,
+                           const InputVec *inputVector,
+                           OutputVec *outputVector);
 
-    JobState jobState{};
-
-    void storeReduceResult(OutputPair outputPair);
-    void updateState();
-    ~JobContext();
-
-    bool wasWaitForJobCalled();
-
-    void joinThreads() const;
-    std::vector<ThreadContext *> *_threadContexts{};
-
-
-    std::atomic<uint64_t> atomicProgressTracker;
-    std::atomic<unsigned long> atomicTotalPairsCount;
-    int _multiThreadLevel;
-//    int _shuffleStageTotalWork;
-    const MapReduceClient *_mapReduceClient;
-    const InputVec *_inputVec;
-    OutputVec *_outputVec;
-//    std::vector<ThreadContext *> *_threadContexts;
-    std::vector<IntermediateVec*> *_shuffleVec;
-    std::atomic<unsigned long> _atomic_nextIndex{};
-    bool _isWaitForJobCalled;
-    pthread_mutex_t _mutex_waitForJob{};
-    pthread_mutex_t _mutex_saveOutput{};
-    pthread_mutex_t _mutex_updateState{};
-    sem_t _sem_reducePhase{};
-    pthread_t *_threads{};
-    Barrier *_barrier{};
-    static void _systemError(const std::string &string);
-    static void _lockMutex(pthread_mutex_t &mutex); // TODO check if needed more mutex, if not needed delete arg
-    static void _unlockMutex(pthread_mutex_t &mutex);
-    static void _destroyMutex(pthread_mutex_t &mutex);
-//    static bool _equalKeys(K2 *firstKey, K2 *secondKey);
-    static unsigned long getCompletedCount(uint64_t progressTrackerValue);
-    static unsigned long getTotalCount(uint64_t progressTrackerValue);
-    static unsigned long getState(uint64_t progressTrackerValue);
-    void _memoryAllocation();
-    void _initSaveOutputMutex();
-    void _initWaitForJobMutex();
-    void _initReduceSem();
-    void *_run(int threadID);
-    void _mapPhase(ThreadContext *threadContext);
-//    void _incProgress();
-    void _createThreads();
-    void _shufflePhase();
-    IntermediateVec _getMaxVec(K2 *maxKey) const;
-    void _reducePhase();
-    void _reduceSemDown();
-
-    void _destroySem() const;
-
-//    void _wakeUpThreads() const;
-
-
-    K2 *_getMaxKey() const;
-
-//    unsigned long _getTotalWork();
-
-//    unsigned long _calcShuffleStageTotalWork();
-
-    void _initUpdateStateMutex();
-
-//    void sortPhase(ThreadContext *threadContext);
-    IntermediateVec getMaxVec(K2 *maxKey) const;
-
-//    static unsigned long getNextIndex(u_int64_t progressTrackerValue);
-
+    /**
+     * Gets the maximum key out of all the threads intermediates vectors.
+     */
     K2 *getMaxKey() const;
 
-    void _destroyMutex(pthread_mutex_t *mutex);
+    /**
+     * Makes vector with all elements according to maxKey
+     */
+    void makeMaxVec(IntermediateVec *maxVec, K2 *maxKey) const;
 
-    void _unlockMutex(pthread_mutex_t *mutex);
+    /**
+     * Gets key and a value and stores it as output pair in the output vector
+     */
+    void storeReduceResult(K3 *key, V3 *value);
 
-    void _lockMutex(pthread_mutex_t *mutex);
+    /**
+     * Updates the state of this job.
+     */
+    void updateState();
 
-    void _wakeUpThreads(sem_t *sem) const;
+    /**
+     * Handles a call of wait for job
+     */
+    bool wasWaitForJobCalled();
 
-    void _destroySem();
+    /**
+     * Joins all thread.
+     */
+    void joinThreads() const;
 
-    void _wakeUpThreads(sem_t &sem) const;
+    /**
+     * Destructor.
+     */
+    ~JobContext();
+
+    int multiThreadLevel;
+    const MapReduceClient *mapReduceClient;
+    const InputVec *inputVec;
+    OutputVec *outputVec;
+    Barrier *barrier{};
+    pthread_t *threads{};
+    JobState jobState{};
+    std::vector<ThreadContext *> *threadContexts{};
+    std::vector<IntermediateVec*> *shuffleVec{};
+    std::atomic<uint64_t> atomicProgressTracker{};
+    std::atomic<unsigned long> atomicTotalPairsCount{};
+    std::atomic<unsigned long> atomic_nextIndex{};
+    bool _isWaitForJobCalled;
+    pthread_mutex_t _mutex_waitForJob{};
+    pthread_mutex_t mutex_saveOutput{};
+    pthread_mutex_t mutex_updateState{};
+
+
+private:
+
+    /**
+     * Returns the value of the second 31 bit of the atomicProgressTracker,
+     * that is the number of total keys to process
+     */
+    static unsigned long _getTotalCount(uint64_t progressTrackerValue);
+
+    /**
+    * Returns the value of the 2 last bit bit of the atomicProgressTracker,
+     * that is the job current state
+    */
+    static unsigned long _getState(uint64_t progressTrackerValue);
+
+    /**
+     * Returns the value of the first 31 bit of the atomicProgressTracker,
+     * the number of already processed keys.
+     */
+    static unsigned long _getCompletedCount(uint64_t progressTrackerValue);
+
+    /**
+     * locks mutex.
+     */
+    static void _lockMutex(pthread_mutex_t &mutex);
+
+    /**
+     * unlocks mutex.
+     */
+    static void _unlockMutex(pthread_mutex_t &mutex);
+
+    /**
+     * destroy mutex.
+     */
+    static void _destroyMutex(pthread_mutex_t &mutex);
+
+    /**
+     * prints system error to stderr
+     */
+    static void _systemError(const std::string &string);
+
+    /**
+     * Return true if two keys are equal, and faults otherwise
+     */
+    static bool _equalKeys(K2 *firstKey, K2 *secondKey);
+
+    /**
+     * allocates object on the heap.
+     */
+    void _memoryAllocation();
+
+    /**
+     * init for saveOutput mutex
+     */
+    void _initSaveOutputMutex();
+
+    /**
+     * init for waitForJob mutex
+     */
+    void _initWaitForJobMutex();
+
+    /**
+     * init for updateStage mutex
+     */
+    void _initUpdateStateMutex();
+
 };
 
 

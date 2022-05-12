@@ -10,11 +10,11 @@
 // #include "../googletest/googletest/include/gtest/gtest.h"
 
 
-static const int REPEATS = 10000;
+static const int REPEATS = 500;
 //static const int DEADLOCK_REPEATS = 1000000;
-static const int DEADLOCK_REPEATS = 100000;
+static const int DEADLOCK_REPEATS = 1000;
 
-static const int RANDOM_REPEATS = 2000;
+static const int RANDOM_REPEATS = 150;
 
 pthread_mutex_t k2ResourcesMutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -333,8 +333,8 @@ std::map<char, int> expectedOutput = {{'0',  13258},
                                       {'|',  13043},
                                       {'}',  13164},
                                       {'~',  13234},
-                                      {' ',  13096},
-                                      {'\r',  5000}}; // todo: need to remove '/r' ?
+                                      {' ',  13096}};
+//                                      {'\r',  5000}}; // todo: need to remove '/r' ?
 for (OutputPair &pair: client.outputVec) {
 char c = ((const KChar *) pair.first)->c;
 int count = ((const VCount *) pair.second)->count;

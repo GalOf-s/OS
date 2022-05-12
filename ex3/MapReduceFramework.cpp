@@ -6,257 +6,172 @@
 #include <algorithm>
 
 
-#define SYSTEM_ERROR "system error: "
-#define MEMORY_ALLOCATION_ERROR "failed to allocate memory."
-
-void systemError(const std::string &string);
-
-void lockMutex(pthread_mutex_t &mutex);
-
-void unlockMutex(pthread_mutex_t &mutex);
-
-
-void wakeUpThreads(JobContext *jobContext, sem_t *sem) {
-    for (int i = 0; i < jobContext->_multiThreadLevel; ++i) {
-        if (sem_post(sem) != 0) {
-            std::cerr << SYSTEM_ERROR << SEM_POST_ERROR << std::endl;
-            exit(EXIT_FAILURE);
-        }
-    }
-}
-
-//void reduceSemDown(JobContext *jobContext) {
-//    if (sem_wait(jobContext->_sem_reducePhase) != 0) {
-//        std::cerr << SYSTEM_ERROR << SEM_DOWN_ERROR << std::endl;
-//        exit(EXIT_FAILURE);
-//    }
-//}
-
-
+/**
+ * prints system error to stderr
+ */
 void systemError(const std::string &string) {
-    std::cerr << SYSTEM_ERROR + string << std::endl;
+    std::cerr << SYSTEM_ERROR_MSG + string << std::endl;
     exit(EXIT_FAILURE);
 }
 
-
+/**
+ * locks mutex
+ */
 void lockMutex(pthread_mutex_t &mutex) {
     if (pthread_mutex_lock(&mutex) != 0) {
-        systemError(PTHREAD_MUTEX_LOCK_ERROR);
+        systemError(PTHREAD_MUTEX_LOCK_ERROR_MSG);
     }
 }
 
-
+/**
+ * unlocks mutex
+ */
 void unlockMutex(pthread_mutex_t &mutex) {
     if (pthread_mutex_unlock(&mutex) != 0) {
-        systemError(PTHREAD_MUTEX_UNLOCK_ERROR);
+        systemError(PTHREAD_MUTEX_UNLOCK_ERRO_MSG);
     }
 }
 
-void mapPhase(ThreadContext *threadContext)
-{
+/**
+ * Handles the map phase function for one thread
+ */
+void mapPhase(ThreadContext *threadContext) {
     auto jobContext = threadContext->getJobContext();
-    lockMutex(jobContext->_mutex_updateState);
-    if(jobContext->atomicProgressTracker.load() < (((uint64_t) MAP_STAGE) << STAGE_OFFSET)) {
+    lockMutex(jobContext->mutex_updateState);
+    if (jobContext->atomicProgressTracker.load() < (((uint64_t) MAP_STAGE) << STAGE_OFFSET)) {
         jobContext->atomicProgressTracker = ((uint64_t) MAP_STAGE << STAGE_OFFSET);
     }
-    unlockMutex(jobContext->_mutex_updateState);
+    unlockMutex(jobContext->mutex_updateState);
 
-
-    unsigned long inputVectorIndex = (jobContext->_atomic_nextIndex)++;
-    unsigned long inputVectorLength = jobContext->_inputVec->size();
-    while(inputVectorIndex < inputVectorLength) {
-        jobContext->_mapReduceClient->map(jobContext->_inputVec->at(inputVectorIndex).first, jobContext->_inputVec->at(inputVectorIndex).second, threadContext);
-        inputVectorIndex = (jobContext->_atomic_nextIndex)++;
+    unsigned long inputVectorIndex = (jobContext->atomic_nextIndex)++;
+    while (inputVectorIndex < jobContext->inputVec->size()) {
+        InputPair nextPair = jobContext->inputVec->at(inputVectorIndex);
+        jobContext->mapReduceClient->map(nextPair.first, nextPair.second, threadContext);
+        inputVectorIndex = (jobContext->atomic_nextIndex)++;
         jobContext->atomicProgressTracker++; // update count of completed input pairs
     }
 }
 
-//K2* getMaxKey(ThreadContext *tc) {
-//    K2* maxKey = nullptr;
-//    for (auto & _threadContext : *(tc->_jobContext->_threadContexts)){
-//        if (!_threadContext->isIntermediateVecEmpty() && (maxKey == nullptr || *maxKey < *_threadContext->getMaxKey()))
-//        {
-//            maxKey = _threadContext->getMaxKey();
-//        }
-//    }
-//    return maxKey;
-//}
-
-//IntermediateVec getMaxVec(ThreadContext *tc, JobContext *jobContext, K2 *maxKey){
-//    IntermediateVec maxVec;
-//    for (auto & _threadContext : *jobContext->_threadContexts){
-//        while(!_threadContext->isIntermediateVecEmpty()  && !(*_threadContext->getMaxKey() < *maxKey)) {
-//            maxVec.push_back(_threadContext->getMaxPair());
-//        }
-//    }
-//    return maxVec;
-//}
-
-K2* getMaxKey(JobContext *jobContext){
-    K2* maxKey = nullptr;
-    for (auto & tContext : *jobContext->_threadContexts){
-        if (!tContext->isIntermediateVecEmpty() && (maxKey == nullptr || *maxKey < *tContext->getMaxKey()))
-        {
-            maxKey = tContext->getMaxKey();
-        }
-    }
-    return maxKey;
-}
-
-
-void getMaxVec(JobContext *jobContext, K2 *maxKey, IntermediateVec *maxVec){
-    for (auto & tContext : *jobContext->_threadContexts){
-        while(!tContext->isIntermediateVecEmpty()  && !(*tContext->getMaxKey() < *maxKey)) {
-            maxVec->push_back(tContext->getMaxPair());
-        }
-    }
-}
-
-
+/**
+ * Handles the shuffle phrase.
+ * Note: only thread 0 runs this function.
+ */
 void shufflePhase(JobContext *jobContext) {
-    K2 *maxKey = getMaxKey(jobContext);
-    while (maxKey){
+    K2 *maxKey = jobContext->getMaxKey();
+    while (maxKey) {
         auto *maxVec = new IntermediateVec();
-        getMaxVec(jobContext, maxKey, maxVec);
-        jobContext->_shuffleVec->push_back(maxVec);
+        jobContext->makeMaxVec(maxVec, maxKey);
+        jobContext->shuffleVec->push_back(maxVec);
         jobContext->atomicProgressTracker += maxVec->size();
-        maxKey = getMaxKey(jobContext);
+        maxKey = jobContext->getMaxKey();
     }
 }
 
-
+/**
+ * Handles the reduce phrase function for one thread
+ */
 void reducePhase(JobContext *jobContext) {
-    unsigned long shuffleVectorIndex = jobContext->_atomic_nextIndex++;
-    unsigned long shuffleVectorLength = jobContext->_shuffleVec->size();
+    unsigned long shuffleVectorIndex = jobContext->atomic_nextIndex++;
 
-    while(shuffleVectorIndex < shuffleVectorLength) {
-        IntermediateVec *nextVec = jobContext->_shuffleVec->at(shuffleVectorIndex);
-        jobContext->_mapReduceClient->reduce(nextVec, jobContext);
+    while (shuffleVectorIndex < jobContext->shuffleVec->size()) {
+        IntermediateVec *nextVec = jobContext->shuffleVec->at(shuffleVectorIndex);
+        jobContext->mapReduceClient->reduce(nextVec, jobContext);
         jobContext->atomicProgressTracker += nextVec->size();
-//        std::cout << "size: " << nextVec->size() << std::endl;
-//		jobContext->atomicProgressTracker++;
-		shuffleVectorIndex = jobContext->_atomic_nextIndex++;
+        shuffleVectorIndex = jobContext->atomic_nextIndex++;
+        delete nextVec;
     }
-
 }
 
-bool pairComparer(IntermediatePair pair1, IntermediatePair pair2){
+
+/**
+ * Pair comparer function for sorting algorithem
+ */
+bool pairComparer(IntermediatePair pair1, IntermediatePair pair2) {
     return *pair1.first < *pair2.first;
 }
 
-
-void *run(void *args)
-{
+/**
+ * Handle the entire MapReduce job.
+ * This is the function that all threads run.
+ */
+void *run(void *args) {
     auto threadContext = (ThreadContext *) args;
     auto jobContext = threadContext->getJobContext();
     mapPhase(threadContext);
-//    threadContext->sortPhase();
-    std::sort(threadContext->_intermediateVec->begin(), threadContext->_intermediateVec->end(), pairComparer);
-//    std::cout << "size: " << threadContext->_intermediateVec->size() << std::endl;
 
-    jobContext->_barrier->barrier();
+    IntermediateVec *threadVec = threadContext->getIntermediateVec();
+    std::sort(threadVec->begin(), threadVec->end(), pairComparer);
 
-    if(threadContext->getId() == 0) {
-        jobContext->atomicProgressTracker = (((uint64_t) SHUFFLE_STAGE) << STAGE_OFFSET) + (jobContext->atomicTotalPairsCount << TOTAL_COUNT_OFFSET);
-//        std::cout<<"shuffling"<<std::endl;
+    jobContext->barrier->barrier();
+
+    if (threadContext->getId() == 0) {
+        jobContext->atomicProgressTracker = (((uint64_t) SHUFFLE_STAGE) << STAGE_OFFSET) +
+                                            (jobContext->atomicTotalPairsCount << TOTAL_COUNT_OFFSET);
         shufflePhase(jobContext);
-//        std::cout<<"finished shuffling"<<std::endl;
 
-        jobContext->_atomic_nextIndex = 0;
-        jobContext->atomicProgressTracker = (((uint64_t) REDUCE_STAGE) << STAGE_OFFSET) + (jobContext->atomicTotalPairsCount << TOTAL_COUNT_OFFSET);
+        jobContext->atomicProgressTracker =
+                (((uint64_t) REDUCE_STAGE) << STAGE_OFFSET) + (jobContext->atomicTotalPairsCount << TOTAL_COUNT_OFFSET);
+        jobContext->atomic_nextIndex = 0;
         jobContext->atomicTotalPairsCount = 0;
-        jobContext->_wakeUpThreads(jobContext->_sem_reducePhase);
-//        threadContext->deleteIntermediateVec();
-        delete threadContext->_intermediateVec;
+    }
 
-    }
-//    jobContext->_barrier->barrier();
-    else { // TODO: how to make sure this is executed before wake up?
-        jobContext->_reduceSemDown(); // TODO can barrier can be done instead of a semaphore?
-        delete threadContext->_intermediateVec;
-    }
+    jobContext->barrier->barrier();
+    threadContext->deleteIntermediateVec();
+
     reducePhase(jobContext);
     return nullptr;
 }
 
+/**
+ * Creates all threads.
+ */
 void createThreads(JobContext *jobContext) {
-    jobContext->_threadContexts->reserve(jobContext->_multiThreadLevel);
-    for (int i = 0; i < jobContext->_multiThreadLevel; i++) {
-        jobContext->_threadContexts->emplace_back(new ThreadContext(i, jobContext));
-        if (pthread_create(jobContext->_threads + i, nullptr, run, jobContext->_threadContexts->at(i)) != 0) {
-            systemError(PTHREAD_CREATE_ERROR);
+    jobContext->threadContexts->reserve(jobContext->multiThreadLevel);
+    for (int i = 0; i < jobContext->multiThreadLevel; i++) {
+        jobContext->threadContexts->emplace_back(new ThreadContext(i, jobContext));
+        if (pthread_create(jobContext->threads + i, nullptr, run, jobContext->threadContexts->at(i)) != 0) {
+            systemError(PTHREAD_CREATE_ERROR_MSG);
         }
     }
 }
 
-unsigned long getCompletedCount(u_int64_t progressTrackerValue){
-    return progressTrackerValue & COMPLETED_COUNT_MASK;
-}
-
-unsigned long getTotalCount(uint64_t progressTrackerValue){
-    return (progressTrackerValue & TOTAL_COUNT_MASK) >> TOTAL_COUNT_OFFSET;
-}
-
-unsigned long getState(uint64_t progressTrackerValue){
-    return (progressTrackerValue & STAGE_MASK) >> STAGE_OFFSET;
-}
-
-
-void updateState(JobContext *jobContext)
-{
-    lockMutex(jobContext->_mutex_updateState);
-    uint64_t currProgressTrackerValue = jobContext->atomicProgressTracker.load(); // TODO: should it be protected by lock
-    unlockMutex(jobContext->_mutex_updateState);
-    jobContext->jobState.stage = stage_t(getState(currProgressTrackerValue));
-    unsigned long completed = getCompletedCount(currProgressTrackerValue);
-    unsigned long totalWork = getTotalCount(currProgressTrackerValue);
-    if(!totalWork) { // total work is 0
-        jobContext->jobState.percentage = 0;
-    } else {
-        jobContext->jobState.percentage = 100.0f * (float)  completed / (float) totalWork;
-
-    }
-}
-
-
-
-
 /**
- * This function starts running the MapReduce algorithm (with several _threads)
+ * This function starts running the MapReduce algorithm (with several threads)
  * and returns a JobHandle.
  *
  * @param client The task that the framework should run.
  * @param inputVec The input elements.
  * @param outputVec An empty vector to which the output elements
  * will be added before returning.
- * @param multiThreadLevel A valid number of worker _threads to be used for running the algorithm.
+ * @param multiThreadLevel A valid number of worker threads to be used for running the algorithm.
  * @return JobHandle that will be used for monitoring the job.
  */
-JobHandle startMapReduceJob (const MapReduceClient& client,
-                             const InputVec& inputVec,
-                             OutputVec& outputVec,
-                             int multiThreadLevel) {
+JobHandle startMapReduceJob(const MapReduceClient &client,
+                            const InputVec &inputVec,
+                            OutputVec &outputVec,
+                            int multiThreadLevel) {
     JobContext *jobContext;
-    try{
+    try {
         jobContext = static_cast<JobContext *>(new JobContext(multiThreadLevel,
                                                               &client,
                                                               &inputVec,
                                                               &outputVec));
         createThreads(jobContext);
     } catch (std::bad_alloc &) {
-        systemError(MEMORY_ALLOCATION_ERROR);
+        systemError(MEMORY_ALLOCATION_ERROR_MSG);
     }
     return jobContext;
 }
 
 /**
- * Gets JobHandle returned by startMapReduceFramework and waits until it is finished.
+ * Gets JobHandle returned by startMapReduceFramework and waits until it is fini
+ * shed.
  *
  * @param job A running job.
  */
 void waitForJob(JobHandle job) {
     auto *jobContext = (JobContext *) job;
-    if(jobContext->wasWaitForJobCalled()) {
+    if (jobContext->wasWaitForJobCalled()) {
         return;
     }
     jobContext->joinThreads();
@@ -268,9 +183,9 @@ void waitForJob(JobHandle job) {
  * @param job A running job.
  * @param state State to update.
  */
-void getJobState(JobHandle job, JobState* state) {
+void getJobState(JobHandle job, JobState *state) {
     auto jobContext = (JobContext *) job;
-    updateState(jobContext);
+    jobContext->updateState();
     *state = jobContext->jobState;
 }
 
@@ -298,11 +213,12 @@ void closeJobHandle(JobHandle job) {
  * @param value Value of intermediary element - V2.
  * @param context Contains data structure of the thread that created the intermediary element.
  */
-void emit2 (K2* key, V2* value, void* context) {
+void emit2(K2 *key, V2 *value, void *context) {
     auto threadContext = (ThreadContext *) context;
-    auto jobContext =  threadContext->getJobContext();
-    threadContext->_intermediateVec->push_back({key, value});
-    jobContext->atomicTotalPairsCount++; // These are the total amount of pairs in the shuffle and reduce stages
+    auto jobContext = threadContext->getJobContext();
+    IntermediatePair intermediatePair(key, value);
+    threadContext->storeMapResult(intermediatePair);
+    jobContext->atomicTotalPairsCount++;
 
 }
 
@@ -316,9 +232,7 @@ void emit2 (K2* key, V2* value, void* context) {
  * @param value Value of Output element - V3.
  * @param context Contains data structure of the thread that created the output element.
  */
-void emit3 (K3* key, V3* value, void* context) {
+void emit3(K3 *key, V3 *value, void *context) {
     auto *jobContext = (JobContext *) context;
-    lockMutex(jobContext->_mutex_saveOutput);
-    jobContext->_outputVec->push_back({key, value});
-    unlockMutex(jobContext->_mutex_saveOutput);
+    jobContext->storeReduceResult(key, value);
 }
