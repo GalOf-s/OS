@@ -47,11 +47,6 @@ public:
     bool isIntermediateVecEmpty() const;
 
     /**
-     *
-     */
-    void deleteIntermediateVec() const;
-
-    /**
      * Gets an intermediate pair object and stores it the the intermediate vector.
      */
     void  storeMapResult(IntermediatePair intermediatePair) const;

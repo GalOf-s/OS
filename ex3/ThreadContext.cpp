@@ -13,11 +13,6 @@ JobContext *ThreadContext::getJobContext() const{
     return _jobContext;
 }
 
-void ThreadContext::deleteIntermediateVec() const
-{
-    delete _intermediateVec;
-}
-
 IntermediatePair ThreadContext::getMaxPair() const {
     IntermediatePair currentMaxPair = _intermediateVec->back();
     _intermediateVec->pop_back();

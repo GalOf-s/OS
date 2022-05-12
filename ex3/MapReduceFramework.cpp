@@ -116,7 +116,6 @@ void *run(void *args) {
     }
 
     jobContext->barrier->barrier();
-    threadContext->deleteIntermediateVec();
 
     reducePhase(jobContext);
     return nullptr;
