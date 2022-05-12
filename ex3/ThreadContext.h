@@ -54,7 +54,7 @@ public:
     /**
      * Destructor.
      */
-    void ~ThreadContext();
+    ~ThreadContext();
 
 private:
 
