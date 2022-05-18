@@ -49,3 +49,5 @@ ex3/cmake-build-debug-local/
 ex3/cmake-build-debug-remote/
 
 *.pdf
+
+ex4/cmake-build-debug/
