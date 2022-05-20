@@ -3,60 +3,158 @@
 #include "PhysicalMemory.h"
 
 
-# define EMPTY_CELL_VALUE 0
-/*
+#define EMPTY_CELL_VALUE 0
+#define FAILURE -1
+
+#define SUCCESS 0
+
+int readByIndex(int frameIndex, uint64_t frameOffset);
+
+bool isFrameEmpty(int frameIndex);
+
+uint64_t convertIndexesToAddress(uint64_t frameIndex, uint64_t frameOffset);
+
+uint64_t translateToPhysicalAddress(uint64_t virtualAddress);
+
+void translateToVirtualOffsets(uint64_t pageTable[], uint64_t pages);
+
+void writeByIndex(int frameIndex, uint64_t frameOffset, word_t value);
+
+
+word_t findNextFrame(word_t frame);
+
+word_t firstTranslation(uint64_t pagesTable[]);
+
+word_t secondTranslation(uint64_t pageNum, word_t lastFrame);
+
+/**
+ * Initializes a new frame according to the given frameIndex.
+ */
+void initNewFrame(int frameIndex) {
+    for(int i = 0; i < PAGE_SIZE; i++) {
+        writeByIndex(frameIndex, i, 0);
+    }
+}
+
+/**
  * Initialize the virtual memory.
  */
 void VMinitialize(){
-
+    initNewFrame(0);
 }
 
-/* Reads a word from the given virtual address
+/** Reads a word from the given virtual address
  * and puts its content in *value.
  *
  * returns 1 on success.
  * returns 0 on failure (if the address cannot be mapped to a physical
  * address for any reason)
  */
-int VMread(uint64_t virtualAddress, word_t* value){
-	return 0;
+int VMread(uint64_t virtualAddress, word_t* value) {
+    // TODO if the address cannot be mapped to a physic address for any reason
+    uint64_t physicalAddress = translateToPhysicalAddress(virtualAddress);
+    PMread(physicalAddress, value);
+    return SUCCESS;
 }
 
-/* Writes a word to the given virtual address.
+/** Writes a word to the given virtual address.
  *
  * returns 1 on success.
  * returns 0 on failure (if the address cannot be mapped to a physical
  * address for any reason)
  */
 int VMwrite(uint64_t virtualAddress, word_t value){
-	return 0;
+    // TODO if the address cannot be mapped to a physic address for any reason
+    uint64_t physicalAddress = translateToPhysicalAddress(virtualAddress);
+    PMwrite(physicalAddress, value);
+    return SUCCESS;
 }
 
 
-int ReadByIndex(int frameIndex, int frameOffset);
+void translateToVirtualOffsets(uint64_t pageTable[], uint64_t pages) {
+    for (int i = TABLES_DEPTH - 1; i >= 0; --i) {
+        pageTable[i] = pages % PAGE_SIZE; // TODO check if this is the right macro to get the pages: [p1, p2]
+        pages = pages >> OFFSET_WIDTH;
+    }
+}
 
 
-bool isFrameEmpty(int frameIndex){
-	for(int i=0; i<PAGE_SIZE; i++){
-		if(ReadByIndex(frameIndex, i) != EMPTY_CELL_VALUE){
+/**
+ * Return the translation of a virtual address to a physical address.
+ */
+uint64_t translateToPhysicalAddress(uint64_t virtualAddress) {
+    uint64_t offset = virtualAddress % PAGE_SIZE;
+    uint64_t pageNum = virtualAddress >> OFFSET_WIDTH;
+
+    // an array to find the path from the root to the wanted page
+    uint64_t pagesTable[TABLES_DEPTH]; // TODO check if this is the right size
+
+    translateToVirtualOffsets(pagesTable, pageNum);
+
+    word_t lastFrame = firstTranslation(pagesTable);
+    word_t wantedPageFrame = secondTranslation(pageNum, lastFrame);
+
+    return convertIndexesToAddress(wantedPageFrame, offset);
+}
+
+word_t secondTranslation(uint64_t pageNum, word_t lastFrame) {
+    word_t lastFrameOffset = TABLES_DEPTH - 1;
+
+    word_t wantedPageFrame = readByIndex(lastFrame, lastFrameOffset); // addr2
+    if (wantedPageFrame == EMPTY_CELL_VALUE) {
+        wantedPageFrame = findNextFrame(lastFrame);
+        PMrestore(lastFrame, pageNum);
+        writeByIndex(lastFrame, lastFrameOffset, wantedPageFrame);
+    }
+    return wantedPageFrame;
+}
+
+word_t firstTranslation(uint64_t pagesTable[]) {
+    word_t currentFrame = 0; //addr1
+
+    int i = 0;
+    while (i < TABLES_DEPTH - 1) {
+        word_t nextFrame = readByIndex(currentFrame, pagesTable[i]);
+        if(nextFrame == EMPTY_CELL_VALUE) {
+            nextFrame = findNextFrame(currentFrame);
+            initNewFrame(nextFrame);
+            writeByIndex(currentFrame, pagesTable[i], nextFrame);
+        }
+        currentFrame = nextFrame;
+        i++;
+    }
+    return currentFrame;
+}
+
+word_t findNextFrame(word_t frame) {
+    return 0;
+}
+
+
+bool isFrameEmpty(int frameIndex) {
+	for(int i = 0; i < PAGE_SIZE; i++){
+		if(readByIndex(frameIndex, i) != EMPTY_CELL_VALUE) {
 			return false;
 		}
 	}
 	return true;
 }
 
-uint64_t convertIndexesToAddress(int frameIndex, int frameOffset){
-	return (uint64_t) frameIndex*PAGE_SIZE + frameOffset; // TODO: verify type conversion
+/**
+ * Converts a given frame index and a given frame Offset to a physical address.
+ */
+uint64_t convertIndexesToAddress(uint64_t frameIndex, uint64_t frameOffset){
+	return frameIndex * PAGE_SIZE + frameOffset; // TODO: verify type conversion
 }
 
-/* Finds the first frame in memory that satisfies the condition provided as a boolean function, by
+/** Finds the first frame in memory that satisfies the condition provided as a boolean function, by
  * preforming a DFS run on the page tree.
  *
  * returns the free frame's index upon success.
  * returns -1 if no empty frame was found.
  */
 int findSatisfyingFrame(int startFrameIndex, int currDepth, int* maxFrameVisited, bool (*condition)
-(int)){
+(int)) {
 	if (condition(startFrameIndex)){
 		return *maxFrameVisited + 1;
 	}
@@ -64,27 +162,39 @@ int findSatisfyingFrame(int startFrameIndex, int currDepth, int* maxFrameVisited
 		*maxFrameVisited = startFrameIndex;
 	}
 	if (*maxFrameVisited >= NUM_FRAMES)
-		return -1;
+		return FAILURE;
 
-	if (currDepth < (TABLES_DEPTH-1)){
-		return -1;
+	if (currDepth < (TABLES_DEPTH - 1)){
+		return FAILURE;
 	}
-	for (int i=0; i<PAGE_SIZE; i++){
-		word_t cell_value = ReadByIndex(startFrameIndex, i);
-		if (cell_value != EMPTY_CELL_VALUE){
-			int sub_search_result = findSatisfyingFrame(cell_value, currDepth + 1, maxFrameVisited,
-											   condition);
-			if (sub_search_result != -1){
-				return sub_search_result;
+	for (int i = 0; i < PAGE_SIZE; i++){
+		word_t cellValue = readByIndex(startFrameIndex, i);
+		if (cellValue != EMPTY_CELL_VALUE){
+			int subSearchResult = findSatisfyingFrame(cellValue, currDepth + 1, maxFrameVisited,
+                                                      condition);
+			if (subSearchResult != -1){
+				return subSearchResult;
 			}
 		}
 	}
-	return -1;
+	return FAILURE;
 }
 
-int ReadByIndex(int frameIndex, int frameOffset){
+/**
+ * Reads the content of a given frame index and its offset and returns the result.
+ */
+word_t readByIndex(int frameIndex, uint64_t frameOffset) {
 	word_t result;
 	PMread(convertIndexesToAddress(frameIndex, frameOffset), &result);
 	return result;
 }
+
+/**
+ * Write the given value in the a given frame index and its offset.
+ */
+void writeByIndex(int frameIndex, uint64_t frameOffset, word_t value) {
+    PMwrite(convertIndexesToAddress(frameIndex, frameOffset), value);
+}
+
+
 
