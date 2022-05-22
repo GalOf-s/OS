@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "VirtualMemory.h"
 #include "MemoryConstants.h"
 #include "PhysicalMemory.h"
@@ -32,6 +33,10 @@ word_t firstTranslation(uint64_t pagesTable[]);
 
 word_t secondTranslation(uint64_t pageNum, word_t lastFrame);
 
+long long calcRowCyclicDistance(int frameIndex, int swapInPageIndex, int rowIndex);
+
+long long calcFrameCyclicDistance(int frameIndex, int swapInPageIndex);
+
 /** Finds the first frame in memory that satisfies the condition provided as a boolean function, by
  * preforming a DFS run on the page tree.
  *
@@ -56,7 +61,9 @@ void initNewFrame(int frameIndex) {
  * Initialize the virtual memory.
  */
 void VMinitialize(){
-    initNewFrame(0);
+    for(int i=0; i<NUM_FRAMES; i++){
+		initNewFrame(i);
+	}
 }
 
 /** Reads a word from the given virtual address
@@ -233,20 +240,52 @@ int findEmptyFrame(int startFrameIndex,
 	return FAILURE;
 }
 
-/**
- * Reads the content of a given frame index and its offset and returns the result.
- */
-word_t readByIndex(int frameIndex, uint64_t frameOffset) {
-	word_t result;
-	PMread(convertIndexesToAddress(frameIndex, frameOffset), &result);
-	return result;
+long long calcFrameCyclicDistance(int frameIndex, int swapInPageIndex)
+{
+	long long frameMaxDistance = INT64_MIN;
+	for(int i=0; i<PAGE_SIZE; i++){
+		long long rowDistance = calcRowCyclicDistance(frameIndex, swapInPageIndex, i);
+		if(rowDistance > frameMaxDistance){
+			frameMaxDistance = rowDistance;
+		}
+	}
+	return frameMaxDistance;
 }
 
-/**
- * Write the given value in the a given frame index and its offset.
- */
-void writeByIndex(int frameIndex, uint64_t frameOffset, word_t value) {
-    PMwrite(convertIndexesToAddress(frameIndex, frameOffset), value);
+long long calcRowCyclicDistance(int frameIndex, int swapInPageIndex, int rowIndex)
+{
+	long long distance  = abs(swapInPageIndex - readByIndex(frameIndex, rowIndex));
+	return std::min(NUM_PAGES - distance, distance);
+}
+
+
+void findFrameToEvict(int startFrameIndex,
+					  int currDepth,
+					  int swapInPageIndex,
+					  int currentMaxDistance,
+					  FrameAddress *parentFrame,
+					  FrameAddress *frameToEvict)
+  {
+	if (currDepth >= TABLES_DEPTH){
+		return;
+	}
+
+	parentFrame->frameIndex = startFrameIndex; //TODO: struct containing frame index and offset
+	for (int i = 0; i < PAGE_SIZE; i++){
+		parentFrame->frameOffset = i;
+		word_t cellValue = readByIndex(startFrameIndex, i);
+		if (cellValue != EMPTY_CELL_VALUE){
+			int subSearchResult = findEmptyFrame(cellValue,
+												 currDepth + 1,
+												 maxFrameVisited,
+												 parentFrame,
+												 condition);
+			if (subSearchResult != -1){
+				return subSearchResult;
+			}
+		}
+	}
+	return FAILURE;
 }
 
 
