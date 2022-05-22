@@ -10,11 +10,18 @@
 #define SUCCESS 0
 
 typedef struct{
-	int frameIndex;
-	int frameOffset;
+    int frameIndex;
+    int frameOffset;
 } FrameAddress;
 
 int readByIndex(int frameIndex, uint64_t frameOffset);
+
+void findFrameToEvict(int startFrameIndex,
+                      int currDepth,
+                      int swapInPageIndex,
+                      long long *currentMaxDistance,
+                      FrameAddress *parentFrame,
+                      FrameAddress *frameToEvict);
 
 bool isFrameEmpty(int frameIndex);
 
@@ -44,10 +51,10 @@ long long calcFrameCyclicDistance(int frameIndex, int swapInPageIndex);
  * returns -1 if no empty frame was found.
  */
 int findEmptyFrame(int startFrameIndex,
-				   int currDepth,
-				   int* maxFrameVisited,
-				   FrameAddress *parentFrame,
-				   bool (*condition)(int));
+                   int currDepth,
+                   int* maxFrameVisited,
+                   FrameAddress *parentFrame,
+                   bool (*condition)(int));
 /**
  * Initializes a new frame according to the given frameIndex.
  */
@@ -62,8 +69,8 @@ void initNewFrame(int frameIndex) {
  */
 void VMinitialize(){
     for(int i=0; i<NUM_FRAMES; i++){
-		initNewFrame(i);
-	}
+        initNewFrame(i);
+    }
 }
 
 /** Reads a word from the given virtual address
@@ -150,40 +157,41 @@ word_t firstTranslation(uint64_t pagesTable[]) {
 }
 
 word_t findNextFrame(word_t frame) {
-	int maxFrameVisited = 0;
-	FrameAddress parentFrame;
-	int emptyFrameIndex = findEmptyFrame(frame,
-										 0,
-										 &maxFrameVisited,
-										 &parentFrame,
-										 isFrameEmpty);
-	if (emptyFrameIndex != FAILURE){
-		writeByIndex(parentFrame.frameIndex, parentFrame.frameOffset,
-												 EMPTY_CELL_VALUE);
-		return emptyFrameIndex;
-	}
-	if(maxFrameVisited < NUM_FRAMES - 1){
-		return maxFrameVisited + 1;
-	}
-	// find page to evict
-	return 0;
+    int maxFrameVisited = 0;
+    FrameAddress parentFrame;
+    int emptyFrameIndex = findEmptyFrame(frame,
+                                         0,
+                                         &maxFrameVisited,
+                                         &parentFrame,
+                                         isFrameEmpty);
+    if (emptyFrameIndex != FAILURE){
+        writeByIndex(parentFrame.frameIndex, parentFrame.frameOffset,
+                     EMPTY_CELL_VALUE);
+        return emptyFrameIndex;
+    }
+    if(maxFrameVisited < NUM_FRAMES - 1){
+        return maxFrameVisited + 1;
+    }
+    long long frameMaxDistance = INT64_MIN;
+    // find page to evict
+    return 0;
 }
 
 
 bool isFrameEmpty(int frameIndex) {
-	for(int i = 0; i < PAGE_SIZE; i++){
-		if(readByIndex(frameIndex, i) != EMPTY_CELL_VALUE) {
-			return false;
-		}
-	}
-	return true;
+    for(int i = 0; i < PAGE_SIZE; i++){
+        if(readByIndex(frameIndex, i) != EMPTY_CELL_VALUE) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
  * Converts a given frame index and a given frame Offset to a physical address.
  */
 uint64_t convertIndexesToAddress(uint64_t frameIndex, uint64_t frameOffset){
-	return frameIndex * PAGE_SIZE + frameOffset; // TODO: verify type conversion
+    return frameIndex * PAGE_SIZE + frameOffset; // TODO: verify type conversion
 }
 
 
@@ -191,9 +199,9 @@ uint64_t convertIndexesToAddress(uint64_t frameIndex, uint64_t frameOffset){
  * Reads the content of a given frame index and its offset and returns the result.
  */
 word_t readByIndex(int frameIndex, uint64_t frameOffset) {
-	word_t result;
-	PMread(convertIndexesToAddress(frameIndex, frameOffset), &result);
-	return result;
+    word_t result;
+    PMread(convertIndexesToAddress(frameIndex, frameOffset), &result);
+    return result;
 }
 
 /**
@@ -204,89 +212,81 @@ void writeByIndex(int frameIndex, uint64_t frameOffset, word_t value) {
 }
 
 int findEmptyFrame(int startFrameIndex,
-				   int currDepth,
-				   int *maxFrameVisited,
-				   FrameAddress *parentFrame,
-				   bool (*condition)(int))
-{
-	if (condition(startFrameIndex)){
-		return startFrameIndex;
-	}
-	if(startFrameIndex > *maxFrameVisited){
-		*maxFrameVisited = startFrameIndex;
-	}
+                   int currDepth,
+                   int *maxFrameVisited,
+                   FrameAddress *parentFrame,
+                   bool (*condition)(int))
+                   {
+    if (condition(startFrameIndex)){
+        return startFrameIndex;
+    }
+    if(startFrameIndex > *maxFrameVisited){
+        *maxFrameVisited = startFrameIndex;
+    }
 
-	if (*maxFrameVisited >= NUM_FRAMES)
-		return FAILURE;
+    if (*maxFrameVisited >= NUM_FRAMES)
+        return FAILURE;
 
-	if (currDepth >= (TABLES_DEPTH - 1)){ // TODO: -1?
-		return FAILURE;
-	}
-	parentFrame->frameIndex = startFrameIndex; //TODO: struct containing frame index and offset
-	for (int i = 0; i < PAGE_SIZE; i++){
-		parentFrame->frameOffset = i;
-		word_t cellValue = readByIndex(startFrameIndex, i);
-		if (cellValue != EMPTY_CELL_VALUE){
-			int subSearchResult = findEmptyFrame(cellValue,
-												 currDepth + 1,
-												 maxFrameVisited,
-												 parentFrame,
-												 condition);
-			if (subSearchResult != -1){
-				return subSearchResult;
-			}
-		}
-	}
-	return FAILURE;
-}
+    if (currDepth >= (TABLES_DEPTH - 1)){ // TODO: -1?
+        return FAILURE;
+    }
+    parentFrame->frameIndex = startFrameIndex; //TODO: struct containing frame index and offset
+    for (int i = 0; i < PAGE_SIZE; i++){
+        parentFrame->frameOffset = i;
+        word_t cellValue = readByIndex(startFrameIndex, i);
+        if (cellValue != EMPTY_CELL_VALUE){
+            int subSearchResult = findEmptyFrame(cellValue,
+                                                 currDepth + 1,
+                                                 maxFrameVisited,
+                                                 parentFrame,
+                                                 condition);
+            if (subSearchResult != -1){
+                return subSearchResult;
+            }
+        }
+    }
+    return FAILURE;
+                   }
 
-long long calcFrameCyclicDistance(int frameIndex, int swapInPageIndex)
-{
-	long long frameMaxDistance = INT64_MIN;
-	for(int i=0; i<PAGE_SIZE; i++){
-		long long rowDistance = calcRowCyclicDistance(frameIndex, swapInPageIndex, i);
-		if(rowDistance > frameMaxDistance){
-			frameMaxDistance = rowDistance;
-		}
-	}
-	return frameMaxDistance;
-}
+                   void calcFrameCyclicDistance(int frameIndex, int swapInPageIndex, FrameAddress *frameToEvict, long long *frameMaxDistance)
+                   {
+    long long rowDistance = calcRowCyclicDistance(frameIndex, swapInPageIndex, i);
+    if(rowDistance > *frameMaxDistance){
+        // TODO update page to evict and parent?
+        *frameMaxDistance = rowDistance;
+    }
+                   }
 
-long long calcRowCyclicDistance(int frameIndex, int swapInPageIndex, int rowIndex)
-{
-	long long distance  = abs(swapInPageIndex - readByIndex(frameIndex, rowIndex));
-	return std::min(NUM_PAGES - distance, distance);
-}
+                   long long calcRowCyclicDistance(int frameIndex, int swapInPageIndex, int rowIndex)
+                   {
+    long long distance  = abs(swapInPageIndex - readByIndex(frameIndex, rowIndex));
+    return std::min(NUM_PAGES - distance, distance);
+                   }
 
 
-void findFrameToEvict(int startFrameIndex,
-					  int currDepth,
-					  int swapInPageIndex,
-					  int currentMaxDistance,
-					  FrameAddress *parentFrame,
-					  FrameAddress *frameToEvict)
-  {
-	if (currDepth >= TABLES_DEPTH){
-		return;
-	}
-
-	parentFrame->frameIndex = startFrameIndex; //TODO: struct containing frame index and offset
-	for (int i = 0; i < PAGE_SIZE; i++){
-		parentFrame->frameOffset = i;
-		word_t cellValue = readByIndex(startFrameIndex, i);
-		if (cellValue != EMPTY_CELL_VALUE){
-			int subSearchResult = findEmptyFrame(cellValue,
-												 currDepth + 1,
-												 maxFrameVisited,
-												 parentFrame,
-												 condition);
-			if (subSearchResult != -1){
-				return subSearchResult;
-			}
-		}
-	}
-	return FAILURE;
-}
-
-
+                   void findFrameToEvict(int startFrameIndex,
+                                         int currDepth,
+                                         int swapInPageIndex,
+                                         long long *currentMaxDistance,
+                                         FrameAddress *parentFrame,
+                                         FrameAddress *frameToEvict)
+                                         {
+    if (currDepth == TABLES_DEPTH){
+        calcFrameCyclicDistance(startFrameIndex, swapInPageIndex, frameToEvict, currentMaxDistance); // TODO another pointer so currentMax dis would change?
+        return;
+    }
+    parentFrame->frameIndex = startFrameIndex; //TODO: struct containing frame index and offset
+    for (int i = 0; i < PAGE_SIZE; i++){
+        parentFrame->frameOffset = i;
+        word_t cellValue = readByIndex(startFrameIndex, i);
+        if (cellValue != EMPTY_CELL_VALUE){
+            findFrameToEvict(cellValue,
+                             currDepth + 1,
+                             swapInPageIndex,
+                             currentMaxDistance,
+                             parentFrame,
+                             frameToEvict);
+        }
+    }
+                                         }
 
