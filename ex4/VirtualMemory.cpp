@@ -102,6 +102,7 @@ int VMread(uint64_t virtualAddress, word_t* value) {
  */
 int VMwrite(uint64_t virtualAddress, word_t value){
     // TODO if the address cannot be mapped to a physic address for any reason
+	// TODO: check behaviour for virtualAddress=0
     uint64_t physicalAddress = translateToPhysicalAddress(virtualAddress);
     PMwrite(physicalAddress, value);
     return SUCCESS;
@@ -166,7 +167,7 @@ word_t firstTranslation(uint64_t pagesTable[], uint64_t pageNum) {
 word_t findNextFrame(word_t frame, uint64_t pageNum) {
     int maxFrameVisited = 0;
     FrameAddress parentFrame;
-    int emptyFrameIndex = findEmptyFrame(frame,
+    int emptyFrameIndex = findEmptyFrame(0,
                                          0,
                                          &maxFrameVisited,
                                          &parentFrame,
@@ -227,7 +228,7 @@ int findEmptyFrame(int startFrameIndex,
                    FrameAddress *parentFrame,
                    bool (*condition)(int))
 {
-    if (condition(startFrameIndex)){
+    if (condition(startFrameIndex) && startFrameIndex > 0){
         return startFrameIndex;
     }
     if(startFrameIndex > *maxFrameVisited){
