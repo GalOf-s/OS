@@ -36,13 +36,13 @@
 #define PHYSICAL_ADDRESS_WIDTH 9
 #define VIRTUAL_ADDRESS_WIDTH 6
 
-#elif NO_EVICTION_CONSTANTS
-
-#define OFFSET_WIDTH 5
-#define PHYSICAL_ADDRESS_WIDTH 5
-#define VIRTUAL_ADDRESS_WIDTH 5
-
-#else
+//#elif NO_EVICTION_CONSTANTS
+//
+//#define OFFSET_WIDTH 5
+//#define PHYSICAL_ADDRESS_WIDTH 5
+//#define VIRTUAL_ADDRESS_WIDTH 5
+//
+//#else
 
 #error "You didn't define which constants to use"
 
