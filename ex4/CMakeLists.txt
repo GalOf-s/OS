@@ -5,7 +5,10 @@ cmake_minimum_required(VERSION 3.1)
 # Project configuration
 project(ex4 VERSION 1.0 LANGUAGES C CXX)
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O1")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 
 # ------------- You may only modify the following section ----------- #
 set(vm_source_files
