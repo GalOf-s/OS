@@ -57,7 +57,8 @@ void findFrameToEvict(int startFrameIndex,
  */
 int findEmptyFrame(int startFrameIndex,
                    int currDepth,
-                   int* maxFrameVisited,
+                   word_t protectedFrame,
+                   word_t *maxFrameVisited,
                    FrameAddress *parentFrame,
                    bool (*condition)(int));
 
@@ -173,12 +174,12 @@ word_t firstTranslation(uint64_t pagesTable[], uint64_t pageNum) {
 }
 
 
-word_t findNextFrame(word_t frame, uint64_t pageNum, int searchStartDepth) {
-	//TODO: needs to know which frames are needed for the current pageNum
-    int maxFrameVisited = frame; //TODO: frame
+word_t findNextFrame(word_t protectedFrame, uint64_t pageNum, int searchStartDepth) {
+    //TODO: needs to know which frames are needed for the current pageNum
+    word_t maxFrameVisited = 0; //TODO: frame
     FrameAddress parentFrame;
-    int emptyFrameIndex = findEmptyFrame(frame,
-                                         searchStartDepth,
+//    FrameAddress parentResult;
+    int emptyFrameIndex = findEmptyFrame(0, 0, protectedFrame,
                                          &maxFrameVisited,
                                          &parentFrame,
                                          isFrameEmpty); // TODO: should always start from 0
@@ -193,7 +194,7 @@ word_t findNextFrame(word_t frame, uint64_t pageNum, int searchStartDepth) {
     long long frameMaxDistance = INT64_MIN;
     PageToEvict pageToEvict;
     findFrameToEvict(0, 0, (int) pageNum, 0, &frameMaxDistance, &parentFrame, &pageToEvict);
-	assert(pageToEvict.pageIndex < NUM_PAGES);
+    assert(pageToEvict.pageIndex < NUM_PAGES);
     PMevict(pageToEvict.frameIndex, pageToEvict.pageIndex);
     writeByIndex(pageToEvict.parentFrame.frameIndex, pageToEvict.parentFrame.frameOffset,
                  EMPTY_CELL_VALUE);
@@ -235,36 +236,38 @@ void writeByIndex(int frameIndex, uint64_t frameOffset, word_t value) {
 
 int findEmptyFrame(int startFrameIndex,
                    int currDepth,
-                   int *maxFrameVisited,
+                   word_t protectedFrame,
+                   word_t *maxFrameVisited,
                    FrameAddress *parentFrame,
                    bool (*condition)(int))
 {
-	parentFrame->frameIndex = startFrameIndex; //TODO: struct containing frame index and offset
+    if (condition(startFrameIndex) && startFrameIndex != protectedFrame){
+        return startFrameIndex;
+    }
 
-	if (condition(startFrameIndex) && startFrameIndex != parentFrame->frameIndex){
-		return startFrameIndex;
-	}
 
-	if(startFrameIndex > *maxFrameVisited){
-		*maxFrameVisited = startFrameIndex;
-	}
+    if(startFrameIndex > *maxFrameVisited){
+        *maxFrameVisited = startFrameIndex;
+    }
 
-	if (*maxFrameVisited >= NUM_FRAMES)
-		return -1;
+    if (*maxFrameVisited >= NUM_FRAMES)
+        return -1;
 
-	if (currDepth > (TABLES_DEPTH - 1)){ // TODO: -1?
-		return -1;
-	}
-
-	for (int i = 0; i < PAGE_SIZE; i++){
-		parentFrame->frameOffset = i;
+    if (currDepth == TABLES_DEPTH){ // TODO: -1?
+        return -1;
+    }
+    parentFrame->frameIndex = startFrameIndex; //TODO: struct containing frame index and offset
+    for (int i = 0; i < PAGE_SIZE; i++){
+        parentFrame->frameOffset = i;
         word_t cellValue = readByIndex(startFrameIndex, i);
         if (cellValue != EMPTY_CELL_VALUE){
             int subSearchResult = findEmptyFrame(cellValue,
                                                  currDepth + 1,
+                                                 protectedFrame,
                                                  maxFrameVisited,
                                                  parentFrame,
                                                  condition);
+
             if (subSearchResult != -1){
                 return subSearchResult;
             }
