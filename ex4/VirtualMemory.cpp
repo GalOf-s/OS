@@ -241,7 +241,7 @@ int findEmptyFrame(int startFrameIndex,
                    FrameAddress *parentFrame,
                    bool (*condition)(int))
 {
-    if (condition(startFrameIndex) && startFrameIndex != protectedFrame){
+    if (condition(startFrameIndex) && protectedFrame != startFrameIndex){
         return startFrameIndex;
     }
 
@@ -256,10 +256,10 @@ int findEmptyFrame(int startFrameIndex,
     if (currDepth == TABLES_DEPTH){ // TODO: -1?
         return -1;
     }
-    parentFrame->frameIndex = startFrameIndex; //TODO: struct containing frame index and offset
     for (int i = 0; i < PAGE_SIZE; i++){
-        parentFrame->frameOffset = i;
         word_t cellValue = readByIndex(startFrameIndex, i);
+        parentFrame->frameIndex = startFrameIndex; //TODO: struct containing frame index and offset
+        parentFrame->frameOffset = i;
         if (cellValue != EMPTY_CELL_VALUE){
             int subSearchResult = findEmptyFrame(cellValue,
                                                  currDepth + 1,
@@ -269,10 +269,13 @@ int findEmptyFrame(int startFrameIndex,
                                                  condition);
 
             if (subSearchResult != -1){
+
                 return subSearchResult;
             }
         }
     }
+
+
     return -1;
 }
 
