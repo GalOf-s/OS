@@ -179,7 +179,8 @@ word_t findNextFrame(word_t protectedFrame, uint64_t pageNum, int searchStartDep
     word_t maxFrameVisited = 0; //TODO: frame
     FrameAddress parentFrame;
 //    FrameAddress parentResult;
-    int emptyFrameIndex = findEmptyFrame(0, 0, protectedFrame,
+    int emptyFrameIndex = findEmptyFrame(0, 0,
+										 protectedFrame,
                                          &maxFrameVisited,
                                          &parentFrame,
                                          isFrameEmpty); // TODO: should always start from 0
@@ -196,6 +197,7 @@ word_t findNextFrame(word_t protectedFrame, uint64_t pageNum, int searchStartDep
     findFrameToEvict(0, 0, (int) pageNum, 0, &frameMaxDistance, &parentFrame, &pageToEvict);
     assert(pageToEvict.pageIndex < NUM_PAGES);
     PMevict(pageToEvict.frameIndex, pageToEvict.pageIndex);
+	initNewFrame(pageToEvict.frameIndex);
     writeByIndex(pageToEvict.parentFrame.frameIndex, pageToEvict.parentFrame.frameOffset,
                  EMPTY_CELL_VALUE);
     return pageToEvict.frameIndex;
