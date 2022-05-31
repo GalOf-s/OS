@@ -197,7 +197,6 @@ word_t findNextFrame(word_t protectedFrame, uint64_t pageNum, int searchStartDep
     findFrameToEvict(0, 0, (int) pageNum, 0, &frameMaxDistance, &parentFrame, &pageToEvict);
     assert(pageToEvict.pageIndex < NUM_PAGES);
     PMevict(pageToEvict.frameIndex, pageToEvict.pageIndex);
-	initNewFrame(pageToEvict.frameIndex);
     writeByIndex(pageToEvict.parentFrame.frameIndex, pageToEvict.parentFrame.frameOffset,
                  EMPTY_CELL_VALUE);
     return pageToEvict.frameIndex;
@@ -243,21 +242,23 @@ int findEmptyFrame(int startFrameIndex,
                    FrameAddress *parentFrame,
                    bool (*condition)(int))
 {
-    if (condition(startFrameIndex) && protectedFrame != startFrameIndex){
-        return startFrameIndex;
-    }
+	if(startFrameIndex > *maxFrameVisited){
+		*maxFrameVisited = startFrameIndex;
+	}
 
+	if (currDepth == TABLES_DEPTH){ // TODO: -1?
+		return -1;
+	}
 
-    if(startFrameIndex > *maxFrameVisited){
-        *maxFrameVisited = startFrameIndex;
-    }
+	if (condition(startFrameIndex) && protectedFrame != startFrameIndex){
+		return startFrameIndex;
+	}
+
 
     if (*maxFrameVisited >= NUM_FRAMES)
         return -1;
 
-    if (currDepth == TABLES_DEPTH){ // TODO: -1?
-        return -1;
-    }
+
     for (int i = 0; i < PAGE_SIZE; i++){
         word_t cellValue = readByIndex(startFrameIndex, i);
         parentFrame->frameIndex = startFrameIndex; //TODO: struct containing frame index and offset
