@@ -336,7 +336,6 @@ void findFrameToEvict(word_t startFrameIndex,
     }
 }
 
-
 long long calcCyclicDistance(word_t swapInPageIndex, word_t swapOutPageIndex)
 {
     long long distance  = abs(swapInPageIndex - swapOutPageIndex);
