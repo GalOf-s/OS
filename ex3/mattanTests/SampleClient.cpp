@@ -226,7 +226,7 @@ std::cout << "Starting job" << std::endl;
 
 JobState state;
 JobState last_state = {UNDEFINED_STAGE, 0};
-JobHandle job = startMapReduceJob(client, client.inputVec, client.outputVec, 200);
+JobHandle job = startMapReduceJob(client, client.inputVec, client.outputVec, 2);
 getJobState(job, &state);
 last_state = state;
 while (!(state.stage == REDUCE_STAGE && state.percentage == 100.0)) {
