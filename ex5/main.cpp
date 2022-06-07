@@ -85,7 +85,7 @@ void child(char* args[]) {
     if (chroot(newFilesystemDirectory) < 0) { // set new filesystem directory
         systemError(CHROOT_ERROR_MSG);
     }
-    if (chdir(newFilesystemDirectory) < 0) { // change working directory to newly set filesystem directory
+    if (chdir("/") < 0) { // change working directory to newly set filesystem directory
         systemError(CHDIR_ERROR_MSG);
     }
 
