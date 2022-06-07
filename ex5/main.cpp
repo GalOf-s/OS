@@ -16,27 +16,28 @@
 
 void set_cgroup(char* numProcesses){
 	mkdir(CGROUPS_PATH, 0755); // TODO: check permissions
-
+	std::string cgroups_path = std::string(CGROUPS_PATH);
 	std::ofstream procs_file;
-	procs_file.open (CGROUPS_PATH + "/cgroup.procs");
+	procs_file.open (cgroups_path + "/cgroup.procs");
 	procs_file << "1";
 	procs_file.close();
 
 	std::ofstream max_pids_file;
-	max_pids_file.open (CGROUPS_PATH + "/pids.max");
+	max_pids_file.open (cgroups_path + "/pids.max");
 	max_pids_file << numProcesses;
 	max_pids_file.close();
 
 	std::ofstream notify_file;
-	notify_file.open (CGROUPS_PATH + "/notify_on_release");
+	notify_file.open (cgroups_path + "/notify_on_release");
 	notify_file << "1";
 	notify_file.close();
 }
 
 void clean_up_cgroup(){
-	remove(CGROUPS_PATH + "/cgroup.procs");
-	remove(CGROUPS_PATH + "/pids.max");
-	remove(CGROUPS_PATH + "/notify_on_release");
+	std::string cgroups_path = std::string(CGROUPS_PATH);
+	remove(&(cgroups_path + "/cgroup.procs")[0]);
+	remove(&(cgroups_path + "/pids.max")[0]);
+	remove(&(cgroups_path + "/notify_on_release")[0]);
 	rmdir(CGROUPS_PATH);
 	rmdir("/sys/fs/cgroups");
 	rmdir("/sys/fs");
@@ -54,7 +55,6 @@ void child(char* args[]) {
 	chdir(newFilesystemDirectory);  // change working directory to newly set filesystem directory
     mount("proc", "/proc", "proc", 0, 0); // new process will be same inside proc
 	set_cgroup(numProcesses);
-
     char* argsChild[] ={pathToProgramToRun, argsForProgram + 1, (char *)0};
     execvp(pathToProgramToRun, argsChild);
 }
