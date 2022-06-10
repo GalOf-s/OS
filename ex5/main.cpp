@@ -21,6 +21,7 @@
 #define CGROUPS "/sys/fs/cgroups"
 #define FS "/sys/fs"
 #define CHILD_ID "1"
+#define FIRST_ARG_INDEX 4
 
 #define SYSTEM_ERROR_MSG "system error: "
 #define MEMORY_ALLOCATION_ERROR_MSG "failed to allocate memory."
@@ -32,6 +33,10 @@
 #define EXECVP_ERROR_MSG "error on execvp"
 #define WAIT_ERROR_MSG "error on wait"
 
+struct clone_args {
+	int argc;
+	char** argv;
+};
 
 
 /**
@@ -71,12 +76,22 @@ void clean_up_cgroup(){
     rmdir(FS);
 }
 
-void child(char* args[]) {
-    char* newHostName = args[1];
-    char* newFilesystemDirectory = args[2];
-    char* numProcesses = args[3];
-    char* pathToProgramToRun = args[4];
-    char* argsForProgram = args[5];
+void extract_args_for_program(char* args[], char*** args_for_program, int argc)
+{
+	char **subset = (char **) malloc((argc - FIRST_ARG_INDEX) * sizeof(char *));
+
+	for (int j = FIRST_ARG_INDEX; j < argc; j++)
+		subset[j-FIRST_ARG_INDEX] = args[j];
+
+	*args_for_program = subset;
+}
+
+void child(clone_args* args) {
+	char** argv = args->argv;
+    char* newHostName = argv[1];
+    char* newFilesystemDirectory = argv[2];
+    char* numProcesses = argv[3];
+    char* pathToProgramToRun = argv[4];
 
     if (sethostname(newHostName, strlen(newHostName)) < 0) { // set new host name
         systemError(SETHOSTNAME_ERROR_MSG);
@@ -95,9 +110,14 @@ void child(char* args[]) {
 
     set_cgroup(numProcesses); // TODO errors on opening files?
 
-    char* argsChild[] ={pathToProgramToRun, argsForProgram + 1, (char *)0};
-    if(execvp(pathToProgramToRun, argsChild) < 0) {
-        systemError(EXECVP_ERROR_MSG);
+	char*** argsForProgram = new char**;
+	extract_args_for_program(argv, argsForProgram, args->argc);
+
+//    char* argsChild[] ={pathToProgramToRun, *argsForProgram, (char *)0};
+    if(execv(pathToProgramToRun, *argsForProgram) < 0) {
+        std::cerr<<"errno: "<<std::strerror(errno)<<std::endl;
+		systemError(EXECVP_ERROR_MSG);
+
     }
 }
 
@@ -107,9 +127,12 @@ int main(int argc, char* argv[]) {
         systemError(MEMORY_ALLOCATION_ERROR_MSG);
     }
 
+	struct clone_args args = {argc, argv}; // here only for debugging
+	char*** argsForProgram; // here only for debugging
+	extract_args_for_program(args.argv, argsForProgram, args.argc); // here only for debugging
     if(clone(reinterpret_cast<int (*)(void *)>(child), // TODO check if reinterpret_cast ok
                           stack + STACK,
-                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD, argv) < 0) {
+                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD, &args) < 0) {
         systemError(CLONE_ERROR_MSG);
     }
 
