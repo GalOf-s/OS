@@ -70,8 +70,8 @@ void set_cgroup(char* numProcesses){
     notify_file.close();
 }
 
-void concat_paths(char* first_path, char* second_path, char* &result){
-	result = (char*) calloc(strlen(first_path)+strlen(second_path)+1, sizeof(char));
+void concat_paths(const char *first_path, const char *second_path, char* &result){
+	result = (char*) calloc(strlen(first_path) + strlen(second_path) + 1, sizeof(char));
 	strcpy(result,first_path); // copy string one into the result.
 	strcat(result,second_path); // append string two to the result.
 }
@@ -131,7 +131,7 @@ void child(void *args) {
     }
 
     char** argsForProgram = new char*[childArgs->argc - 5];
-    argsForProgram[0] = childArgs->argv[4];
+    argsForProgram[0] = pathToProgramToRun;
     int childIndex = 1;
     for (int i = 5; i < childArgs->argc; i++) {
         argsForProgram[childIndex] = childArgs->argv[i];
@@ -151,10 +151,10 @@ int main(int argc, char* argv[]) {
         systemError(MEMORY_ALLOCATION_ERROR_MSG);
     }
 
-	ChildArgs x = {argc, argv};
+	ChildArgs childArgs = {argc, argv};
     if(clone(reinterpret_cast<int (*)(void *)>(child), // TODO check if reinterpret_cast ok
                           stack + STACK,
-                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD,&x) < 0) {
+                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD,&childArgs) < 0) {
         std::cerr << std::strerror(errno) << std::endl;
         systemError(CLONE_ERROR_MSG);
     }
