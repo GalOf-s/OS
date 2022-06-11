@@ -51,13 +51,13 @@ void systemError(const std::string &string) {
 void set_cgroup(char* numProcesses){
 //    int i= mkdir(CGROUPS_PIDS, PERMISSIONS);
 //    ENOTDIR
-    int i= mkdir("/sys/fs", PERMISSIONS);
-    int j= mkdir("/sys/fs/cgroups", PERMISSIONS);
+    int i= mkdir("/sys/fs", PERMISSIONS); // TODO check if ok
+    int j= mkdir("/sys/fs/cgroups", PERMISSIONS); // TODO check if ok
     int m= mkdir( "/sys/fs/cgroups/pids", PERMISSIONS);
 
-//    std::cerr << i << std::endl;
-//    std::cerr << j << std::endl;
-    std::cerr << m << std::endl;
+    std::cerr << i << std::endl; // for debuging
+    std::cerr << j << std::endl; // for debuging
+    std::cerr << m << std::endl; // for debuging
     std::ofstream procs_file;
 
     procs_file.open (CGROUPS_PIDS CGROUPS_PROCS);
@@ -92,12 +92,6 @@ void child(void *args) {
     char* numProcesses = childArgs->argv[3];
     char* pathToProgramToRun = childArgs->argv[4];
 
-//    std::cerr << newHostName << std::endl;
-//    std::cerr << newFilesystemDirectory << std::endl;
-//    std::cerr << numProcesses << std::endl;
-//    std::cerr << pathToProgramToRun << std::endl;
-//    std::cerr << argsForProgram << std::endl;
-
     if (sethostname(newHostName, strlen(newHostName)) < 0) { // set new host name
         systemError(SETHOSTNAME_ERROR_MSG);
     }
@@ -127,7 +121,7 @@ void child(void *args) {
         argsForProgram[childIndex] = childArgs->argv[i];
         childIndex++;
     }
-    argsForProgram[childIndex] = nullptr;
+    argsForProgram[childIndex] = (char *) 0; // TODO should be here?
 
     if(execvp(pathToProgramToRun, argsForProgram) < 0) {
         std::cerr << errno << std::endl;
@@ -168,14 +162,3 @@ int main(int argc, char* argv[]) {
     umount("proc"); // TODO check if ok + if need error msg
 }
 
-//char*** createArgumentsArray(int argc, char* argv[]) {
-//    char** argsChild = new char*[argc - 5];
-//    int childIndex = 0;
-//
-//    for (int i = 5; i < argc; i++) {
-//        argsChild[childIndex] = argv[i];
-//        childIndex++;
-//    }
-//    char** args[] = {(char **) argv[1], (char **) argv[2], (char **) argv[3], (char **) argv[4], argsChild};
-//    return args;
-//}
