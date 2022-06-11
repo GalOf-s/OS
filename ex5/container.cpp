@@ -14,6 +14,7 @@
 #define PERMISSIONS 0755
 
 
+
 #define CGROUPS_PIDS "/sys/fs/cgroups/pids"
 #define CGROUPS_PROCS "/cgroup.procs"
 #define CGROUPS_MAX "/pids.max"
@@ -32,6 +33,10 @@
 #define EXECVP_ERROR_MSG "error on execvp"
 #define WAIT_ERROR_MSG "error on wait"
 
+struct ChildArgs {
+    int argc;
+    char** argv;
+};
 
 
 /**
@@ -44,8 +49,17 @@ void systemError(const std::string &string) {
 
 
 void set_cgroup(char* numProcesses){
-    mkdir(CGROUPS_PIDS, PERMISSIONS);
+//    int i= mkdir(CGROUPS_PIDS, PERMISSIONS);
+//    ENOTDIR
+    int i= mkdir("/sys/fs", PERMISSIONS);
+    int j= mkdir("/sys/fs/cgroups", PERMISSIONS);
+    int m= mkdir( "/sys/fs/cgroups/pids", PERMISSIONS);
+
+//    std::cerr << i << std::endl;
+//    std::cerr << j << std::endl;
+    std::cerr << m << std::endl;
     std::ofstream procs_file;
+
     procs_file.open (CGROUPS_PIDS CGROUPS_PROCS);
     procs_file << CHILD_ID;
     procs_file.close();
@@ -71,32 +85,52 @@ void clean_up_cgroup(){
     rmdir(FS);
 }
 
-void child(char* args[]) {
-    char* newHostName = args[1];
-    char* newFilesystemDirectory = args[2];
-    char* numProcesses = args[3];
-    char* pathToProgramToRun = args[4];
-    char* argsForProgram = args[5];
+void child(void *args) {
+    auto *childArgs = (ChildArgs *) args;
+    char* newHostName = childArgs->argv[1];
+    char* newFilesystemDirectory = childArgs->argv[2];
+    char* numProcesses = childArgs->argv[3];
+    char* pathToProgramToRun = childArgs->argv[4];
+
+//    std::cerr << newHostName << std::endl;
+//    std::cerr << newFilesystemDirectory << std::endl;
+//    std::cerr << numProcesses << std::endl;
+//    std::cerr << pathToProgramToRun << std::endl;
+//    std::cerr << argsForProgram << std::endl;
 
     if (sethostname(newHostName, strlen(newHostName)) < 0) { // set new host name
         systemError(SETHOSTNAME_ERROR_MSG);
     }
 
     if (chroot(newFilesystemDirectory) < 0) { // set new filesystem directory
+        std::cerr << errno << std::endl;
         systemError(CHROOT_ERROR_MSG);
     }
-    if (chdir(newFilesystemDirectory) < 0) { // change working directory to newly set filesystem directory
+
+    set_cgroup(numProcesses); // TODO errors on opening files?
+
+
+    if (chdir("/") < 0) { // change working directory to newly set filesystem directory
+        std::cerr << errno << std::endl;
         systemError(CHDIR_ERROR_MSG);
     }
+
 
     if (mount("proc", "/proc", "proc", 0, 0) < 0) { // new process will be same inside proc
         systemError(MOUNT_ERROR_MSG);
     }
 
-    set_cgroup(numProcesses); // TODO errors on opening files?
+    char** argsForProgram = new char*[childArgs->argc - 5];
+    argsForProgram[0] = childArgs->argv[4];
+    int childIndex = 1;
+    for (int i = 5; i < childArgs->argc; i++) {
+        argsForProgram[childIndex] = childArgs->argv[i];
+        childIndex++;
+    }
+    argsForProgram[childIndex] = nullptr;
 
-    char* argsChild[] ={pathToProgramToRun, argsForProgram + 1, (char *)0};
-    if(execvp(pathToProgramToRun, argsChild) < 0) {
+    if(execvp(pathToProgramToRun, argsForProgram) < 0) {
+        std::cerr << errno << std::endl;
         systemError(EXECVP_ERROR_MSG);
     }
 }
@@ -107,17 +141,41 @@ int main(int argc, char* argv[]) {
         systemError(MEMORY_ALLOCATION_ERROR_MSG);
     }
 
+    char** argsChild = new char*[argc - 5];
+    argsChild[0] = argv[4];
+    int childIndex = 1;
+    for (int i = 5; i < argc; i++) {
+        argsChild[childIndex] = argv[i];
+        childIndex++;
+    }
+    argsChild[childIndex] = nullptr;
+    char* args[] = { argv[1], argv[2], argv[3], argv[4],  };
+
+    ChildArgs x{ argc, argv};
     if(clone(reinterpret_cast<int (*)(void *)>(child), // TODO check if reinterpret_cast ok
                           stack + STACK,
-                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD, argv) < 0) {
+                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD,&x) < 0) {
+        std::cerr << errno << std::endl;
+
         systemError(CLONE_ERROR_MSG);
     }
 
     if(wait(nullptr) < 0) {
         systemError(WAIT_ERROR_MSG);
-
     }
 
     clean_up_cgroup();
     umount("proc"); // TODO check if ok + if need error msg
 }
+
+//char*** createArgumentsArray(int argc, char* argv[]) {
+//    char** argsChild = new char*[argc - 5];
+//    int childIndex = 0;
+//
+//    for (int i = 5; i < argc; i++) {
+//        argsChild[childIndex] = argv[i];
+//        childIndex++;
+//    }
+//    char** args[] = {(char **) argv[1], (char **) argv[2], (char **) argv[3], (char **) argv[4], argsChild};
+//    return args;
+//}
