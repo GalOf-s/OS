@@ -49,40 +49,56 @@ void systemError(const std::string &string) {
 
 
 void set_cgroup(char* numProcesses){
-//    int i= mkdir(CGROUPS_PIDS, PERMISSIONS);
-//    ENOTDIR
-    int i= mkdir("/sys/fs", PERMISSIONS); // TODO check if ok
-    int j= mkdir("/sys/fs/cgroups", PERMISSIONS); // TODO check if ok
-    int m= mkdir( "/sys/fs/cgroups/pids", PERMISSIONS);
+    mkdir(FS, PERMISSIONS);
+    mkdir(CGROUPS, PERMISSIONS);
+    mkdir( CGROUPS_PIDS, PERMISSIONS);
 
-    std::cerr << i << std::endl; // for debuging
-    std::cerr << j << std::endl; // for debuging
-    std::cerr << m << std::endl; // for debuging
+
     std::ofstream procs_file;
-
     procs_file.open (CGROUPS_PIDS CGROUPS_PROCS);
-    procs_file << CHILD_ID;
+    procs_file << CHILD_ID<<std::endl;
     procs_file.close();
 
     std::ofstream max_pids_file;
     max_pids_file.open (CGROUPS_PIDS CGROUPS_MAX);
-    max_pids_file << numProcesses;
+    max_pids_file << numProcesses<<std::endl;
     max_pids_file.close();
 
     std::ofstream notify_file;
     notify_file.open (CGROUPS_PIDS CGROUPS_NOTIFY);
-    notify_file << CHILD_ID;
+    notify_file << CHILD_ID<<std::endl;
     notify_file.close();
 }
 
-void clean_up_cgroup(){
-    std::string cgroups_path = std::string(CGROUPS_PIDS);
-    remove(CGROUPS_PIDS CGROUPS_PROCS);
-    remove(CGROUPS_PIDS CGROUPS_MAX);
-    remove(CGROUPS_PIDS CGROUPS_NOTIFY);
-    rmdir(CGROUPS_PIDS);
-    rmdir(CGROUPS);
-    rmdir(FS);
+void concat_paths(char* first_path, char* second_path, char* &result){
+	result = (char*) calloc(strlen(first_path)+strlen(second_path)+1, sizeof(char));
+	strcpy(result,first_path); // copy string one into the result.
+	strcat(result,second_path); // append string two to the result.
+}
+
+void clean_up_cgroup(char* container_root_path){
+	char* result;
+	concat_paths(CGROUPS_PIDS, CGROUPS_PROCS, result);
+	concat_paths(container_root_path, result, result);
+	remove(result);
+
+	concat_paths(CGROUPS_PIDS, CGROUPS_MAX, result);
+	concat_paths(container_root_path, result, result);
+    remove(result);
+
+	concat_paths(CGROUPS_PIDS, CGROUPS_NOTIFY, result);
+	concat_paths(container_root_path, result, result);
+    remove(result);
+
+	concat_paths(container_root_path, CGROUPS_PIDS, result);
+    rmdir(result);
+
+	concat_paths(container_root_path, CGROUPS, result);
+    rmdir(result);
+
+	concat_paths(container_root_path, FS, result);
+    rmdir(result);
+
 }
 
 void child(void *args) {
@@ -97,15 +113,15 @@ void child(void *args) {
     }
 
     if (chroot(newFilesystemDirectory) < 0) { // set new filesystem directory
-        std::cerr << errno << std::endl;
+        std::cerr << std::strerror(errno) << std::endl;
         systemError(CHROOT_ERROR_MSG);
     }
 
-    set_cgroup(numProcesses); // TODO errors on opening files?
+    set_cgroup(numProcesses);
 
 
     if (chdir("/") < 0) { // change working directory to newly set filesystem directory
-        std::cerr << errno << std::endl;
+        std::cerr << std::strerror(errno) << std::endl;
         systemError(CHDIR_ERROR_MSG);
     }
 
@@ -124,7 +140,7 @@ void child(void *args) {
     argsForProgram[childIndex] = (char *) 0; // TODO should be here?
 
     if(execvp(pathToProgramToRun, argsForProgram) < 0) {
-        std::cerr << errno << std::endl;
+        std::cerr << std::strerror(errno) << std::endl;
         systemError(EXECVP_ERROR_MSG);
     }
 }
@@ -135,22 +151,11 @@ int main(int argc, char* argv[]) {
         systemError(MEMORY_ALLOCATION_ERROR_MSG);
     }
 
-    char** argsChild = new char*[argc - 5];
-    argsChild[0] = argv[4];
-    int childIndex = 1;
-    for (int i = 5; i < argc; i++) {
-        argsChild[childIndex] = argv[i];
-        childIndex++;
-    }
-    argsChild[childIndex] = nullptr;
-    char* args[] = { argv[1], argv[2], argv[3], argv[4],  };
-
-    ChildArgs x{ argc, argv};
+	ChildArgs x = {argc, argv};
     if(clone(reinterpret_cast<int (*)(void *)>(child), // TODO check if reinterpret_cast ok
                           stack + STACK,
                           CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD,&x) < 0) {
-        std::cerr << errno << std::endl;
-
+        std::cerr << std::strerror(errno) << std::endl;
         systemError(CLONE_ERROR_MSG);
     }
 
@@ -158,7 +163,7 @@ int main(int argc, char* argv[]) {
         systemError(WAIT_ERROR_MSG);
     }
 
-    clean_up_cgroup();
+    clean_up_cgroup(argv[2]);
     umount("proc"); // TODO check if ok + if need error msg
 }
 

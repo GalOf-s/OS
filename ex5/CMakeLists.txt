@@ -3,4 +3,5 @@ project(ex5)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(ex5 container.cpp)
+add_executable(container container.cpp)
+add_executable(sockets sockets.cpp)
