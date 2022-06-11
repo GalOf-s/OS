@@ -19,6 +19,10 @@
 #define ACCEPT_ERROR_MSG "error on accept"
 #define READ_ERROR_MSG "error on read data"
 #define CONNECT_ERROR_MSG "error on read data"
+#define MEMORY_ALLOCATION_ERROR_MSG "failed to allocate memory."
+
+
+
 
 /**
  * prints system error to stderr
@@ -60,13 +64,11 @@ size_t readData(int socketFD, char *buffer, int sizeOfData) {
     return bytesTotalCount;
 }
 
-int client(char *terminalCommandsToWrite, unsigned short portNumber) {
+int client(char *buffer, unsigned short portNumber) {
     int clientSocketFD; size_t writeValue;
 
     // address of server to connect
     struct sockaddr_in serverAddress{};
-    char *buffer = new char[MAX_DATA_SIZE];
-    buffer = terminalCommandsToWrite; // TODO check if ok
 
     // creating client socket file descriptor
     if ((clientSocketFD = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -89,11 +91,10 @@ int client(char *terminalCommandsToWrite, unsigned short portNumber) {
     return 0;
 }
 
-int server(unsigned short portNumber) {
+int server(char* buffer, unsigned short portNumber) {
     int serverSocketFD, clientSocket;
     size_t readValue;
     struct sockaddr_in serverAddress{};
-    char* buffer = new char[MAX_DATA_SIZE];
 
     // creating server socket file descriptor
     if ((serverSocketFD = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -134,11 +135,16 @@ int server(unsigned short portNumber) {
 
 int main(int argc, char* argv[]) {
     unsigned short portNumber = std::stoi(argv[2]);
+    char *buffer = new (std::nothrow) char[MAX_DATA_SIZE];
     if(stpcpy(argv[1],"client")) {
-        char* terminalCommandsToWrite = argv[3];
-        client(terminalCommandsToWrite, portNumber);
+        if(buffer == nullptr) {
+            systemError(MEMORY_ALLOCATION_ERROR_MSG);
+        }
+
+        buffer = argv[3]; // terminalCommandsToWrite
+        client(buffer, portNumber);
     } else {
-        server(portNumber);
+        server(buffer, portNumber);
     }
 }
 
