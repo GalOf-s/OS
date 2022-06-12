@@ -101,7 +101,7 @@ void clean_up_cgroup(char* container_root_path){
 
 }
 
-void child(void *args) {
+int child(void *args) {
     auto *childArgs = (ChildArgs *) args;
     char* newHostName = childArgs->argv[1];
     char* newFilesystemDirectory = childArgs->argv[2];
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
     }
 
 	ChildArgs childArgs = {argc, argv};
-    if(clone(reinterpret_cast<int (*)(void *)>(child), // TODO check if reinterpret_cast ok
+    if(clone(child, // TODO check if reinterpret_cast ok
                           stack + STACK,
                           CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD,&childArgs) < 0) {
         std::cerr << std::strerror(errno) << std::endl;
