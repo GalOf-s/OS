@@ -28,6 +28,7 @@
  */
 void systemError(const std::string &string) {
     std::cerr << SYSTEM_ERROR_MSG + string << std::endl;
+	std::cerr << "Error:" << std::strerror(errno) << std::endl; // TODO: remove before submission
     exit(EXIT_FAILURE);
 }
 
@@ -146,18 +147,18 @@ int server(char* buffer, unsigned short portNumber) {
     FD_SET(serverSocketfd, &clientsFDs);
     FD_SET(STDIN_FILENO, &clientsFDs);
     for( ; ; ) {
-        readfds = clientsFDs;
-        if (select(MAX_CLIENTS + 1, &readfds, nullptr,nullptr, nullptr) < 0) {
-            close(serverSocketfd);
-            systemError(SELECT_ERROR_MSG);
-        }
-        if (FD_ISSET(serverSocketfd, &readfds)) {
-
+//        readfds = clientsFDs;
+//        if (select(MAX_CLIENTS + 1, &readfds, nullptr,nullptr, nullptr) < 0) {
+//            close(serverSocketfd);
+//            systemError(SELECT_ERROR_MSG);
+//        }
+//        if (FD_ISSET(serverSocketfd, &readfds)) {
+		{
             if ((clientSocket = accept(serverSocketfd, nullptr, nullptr)) < 0) {
                 close(serverSocketfd);
                 systemError(ACCEPT_ERROR_MSG);
             }
-            FD_SET(clientSocket, &clientsFDs); // add new client to the clientFDs set
+//            FD_SET(clientSocket, &clientsFDs); // add new client to the clientFDs set
 
             if((readValue = readData(clientSocket, buffer, MAX_DATA_SIZE) < 0)) {
                 close(serverSocketfd);
@@ -165,6 +166,7 @@ int server(char* buffer, unsigned short portNumber) {
             }
             system(buffer);
             close(clientSocket);
+//			clientSocket = -1;
         }
     }
 
@@ -182,7 +184,7 @@ int main(int argc, char* argv[]) {
     if(strcmp(argv[1], "client") == 0) {
 
 
-        buffer = argv[3]; // terminalCommandToWrite
+        buffer = argv[3]; // terminalCommandToWrite TODO: support multiple arguments
         client(buffer, portNumber);
     } else {
         server(buffer, portNumber);
