@@ -32,26 +32,39 @@
 #define CHDIR_ERROR_MSG "error on chdir"
 #define EXECVP_ERROR_MSG "error on execvp"
 #define WAIT_ERROR_MSG "error on wait"
+#define UNMOUNT_ERROR_MSG "error on unmount"
+#define REMOVE_ERROR_MSG "error on remove"
+#define MKDIR_ERROR_MSG "error on mkdir"
+#define RMDIR_ERROR_MSG "error on rmdir"
 
 struct ChildArgs {
     int argc;
     char** argv;
 };
 
-
 /**
- * prints system error to stderr
+ * Prints system error to stderr.
  */
 void systemError(const std::string &string) {
     std::cerr << SYSTEM_ERROR_MSG + string << std::endl;
     exit(EXIT_FAILURE);
 }
 
-
+/**
+ * Set up the cgroup files.
+ */
 void set_cgroup(char* numProcesses){
-    mkdir(FS, PERMISSIONS);
-    mkdir(CGROUPS, PERMISSIONS);
-    mkdir( CGROUPS_PIDS, PERMISSIONS);
+    if (mkdir(FS, PERMISSIONS) < 0) {
+        systemError(MKDIR_ERROR_MSG);
+    }
+
+    if (mkdir(CGROUPS, PERMISSIONS) < 0) {
+        systemError(MKDIR_ERROR_MSG);
+    }
+
+    if (mkdir( CGROUPS_PIDS, PERMISSIONS) < 0) {
+        systemError(MKDIR_ERROR_MSG);
+    }
 
 
     std::ofstream procs_file;
@@ -61,7 +74,7 @@ void set_cgroup(char* numProcesses){
 
     std::ofstream max_pids_file;
     max_pids_file.open (CGROUPS_PIDS CGROUPS_MAX);
-    max_pids_file << numProcesses<<std::endl;
+    max_pids_file << numProcesses << std::endl;
     max_pids_file.close();
 
     std::ofstream notify_file;
@@ -70,37 +83,58 @@ void set_cgroup(char* numProcesses){
     notify_file.close();
 }
 
+/**
+ * Copies string path.
+ */
 void concat_paths(const char *first_path, const char *second_path, char* &result){
 	result = (char*) calloc(strlen(first_path) + strlen(second_path) + 1, sizeof(char));
 	strcpy(result,first_path); // copy string one into the result.
 	strcat(result,second_path); // append string two to the result.
 }
 
+/**
+ * Clean the cgroup files.
+ */
 void clean_up_cgroup(char* container_root_path){
 	char* result;
 	concat_paths(CGROUPS_PIDS, CGROUPS_PROCS, result);
 	concat_paths(container_root_path, result, result);
-	remove(result);
+    if(remove(result) < 0) {
+        systemError(REMOVE_ERROR_MSG);
+    }
 
 	concat_paths(CGROUPS_PIDS, CGROUPS_MAX, result);
 	concat_paths(container_root_path, result, result);
-    remove(result);
+    if(remove(result) < 0) {
+        systemError(REMOVE_ERROR_MSG);
+    }
 
 	concat_paths(CGROUPS_PIDS, CGROUPS_NOTIFY, result);
 	concat_paths(container_root_path, result, result);
-    remove(result);
+    if(remove(result) < 0) {
+        systemError(REMOVE_ERROR_MSG);
+    }
 
 	concat_paths(container_root_path, CGROUPS_PIDS, result);
-    rmdir(result);
+    if(rmdir(result) < 0) {
+        systemError(RMDIR_ERROR_MSG);
+    }
 
 	concat_paths(container_root_path, CGROUPS, result);
-    rmdir(result);
+    if(rmdir(result) < 0) {
+        systemError(RMDIR_ERROR_MSG);
+    }
 
-	concat_paths(container_root_path, FS, result);
-    rmdir(result);
-
+    concat_paths(container_root_path, FS, result);
+    if(rmdir(result) < 0) {
+        systemError(RMDIR_ERROR_MSG);
+    }
 }
 
+/**
+ * The main function of the container to be created.
+ * Sets all flags of the child.
+ */
 int child(void *args) {
     auto *childArgs = (ChildArgs *) args;
     char* newHostName = childArgs->argv[1];
@@ -113,18 +147,14 @@ int child(void *args) {
     }
 
     if (chroot(newFilesystemDirectory) < 0) { // set new filesystem directory
-        std::cerr << std::strerror(errno) << std::endl;
         systemError(CHROOT_ERROR_MSG);
     }
 
     set_cgroup(numProcesses);
 
-
     if (chdir("/") < 0) { // change working directory to newly set filesystem directory
-        std::cerr << std::strerror(errno) << std::endl;
         systemError(CHDIR_ERROR_MSG);
     }
-
 
     if (mount("proc", "/proc", "proc", 0, 0) < 0) { // new process will be same inside proc
         systemError(MOUNT_ERROR_MSG);
@@ -137,14 +167,18 @@ int child(void *args) {
         argsForProgram[childIndex] = childArgs->argv[i];
         childIndex++;
     }
-    argsForProgram[childIndex] = (char *) 0; // TODO should be here?
+    argsForProgram[childIndex] = (char *) 0;
 
     if(execvp(pathToProgramToRun, argsForProgram) < 0) {
-        std::cerr << std::strerror(errno) << std::endl;
         systemError(EXECVP_ERROR_MSG);
     }
+
+    return 0;
 }
 
+/**
+ * Runs a container program.
+ */
 int main(int argc, char* argv[]) {
     char* stack = new (std::nothrow) char [STACK]; // child's stack
     if(stack == nullptr) {
@@ -152,10 +186,9 @@ int main(int argc, char* argv[]) {
     }
 
 	ChildArgs childArgs = {argc, argv};
-    if(clone(child, // TODO check if reinterpret_cast ok
+    if(clone(child,
                           stack + STACK,
                           CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD,&childArgs) < 0) {
-        std::cerr << std::strerror(errno) << std::endl;
         systemError(CLONE_ERROR_MSG);
     }
 
@@ -164,6 +197,8 @@ int main(int argc, char* argv[]) {
     }
 
     clean_up_cgroup(argv[2]);
-    umount("proc"); // TODO check if ok + if need error msg
+    if(umount("proc") < 0){
+        systemError(UNMOUNT_ERROR_MSG);
+    }
 }
 

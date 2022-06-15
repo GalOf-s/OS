@@ -1,13 +1,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <cstring>
 #include <netdb.h>
 #include <unistd.h>
 #include <string>
 #include <iostream>
 
-#define MAX_HOST_NAME 256 // TODO what number to put here
+#define MAX_HOST_NAME 256
 #define MAX_DATA_SIZE 256
 #define MAX_CLIENTS 5
 #define FAILURE -1
@@ -24,13 +23,16 @@
 #define SELECT_ERROR_MSG "error on select"
 
 /**
- * prints system error to stderr
+ * Prints system error to stderr.
  */
 void systemError(const std::string &string) {
     std::cerr << SYSTEM_ERROR_MSG + string << std::endl;
     exit(EXIT_FAILURE);
 }
 
+/**
+ * Writes a data into a buffer.
+ */
 size_t writeData(int socketFD, char *buffer, size_t sizeOfData){
     size_t bytesTotalCount = 0; // counts bytes read
     size_t bytesThisRound = 0; // bytes read this pass
@@ -47,6 +49,9 @@ size_t writeData(int socketFD, char *buffer, size_t sizeOfData){
     return bytesTotalCount;
 }
 
+/**
+ * Reads the data from a buffer.
+ */
 size_t readData(int socketFD, char *buffer, size_t sizeOfData) {
     size_t bytesTotalCount = 0; // counts bytes read
     size_t bytesThisRound = 0; // bytes read this pass
@@ -63,8 +68,11 @@ size_t readData(int socketFD, char *buffer, size_t sizeOfData) {
     return bytesTotalCount;
 }
 
-int client(char *buffer, unsigned short portNumber) {
-    int clientSocketfd, serverSocketfd; size_t writeValue;
+/**
+ * The clients side. Opening a socket and writing terminal commands to run into a servers socket.
+ */
+void client(char *buffer, unsigned short portNumber) {
+    int clientSocketFD;
     struct sockaddr_in serverAddress{}; // address of server to connect to
     char serverName[MAX_HOST_NAME + 1];
     struct hostent *hostIp{};
@@ -82,30 +90,29 @@ int client(char *buffer, unsigned short portNumber) {
     serverAddress.sin_port = htons(portNumber);
     memcpy(&serverAddress.sin_addr, hostIp->h_addr, hostIp->h_length); // TODO do we need to use inet_aton?
 
-
     // creating client socket file descriptor
-    if ((clientSocketfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    if ((clientSocketFD = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         systemError(SOCKET_ERROR_MSG);
     }
 
-
     // connect to the server
-    if (connect(clientSocketfd, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) < 0) {
-        close(clientSocketfd);
+    if (connect(clientSocketFD, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) < 0) {
+        close(clientSocketFD);
         systemError(CONNECT_ERROR_MSG);
     }
 
-    writeData(clientSocketfd, buffer, strlen(buffer)); // TODO what now?
+    writeData(clientSocketFD, buffer, strlen(buffer)); // writes to the clients socket
 
-
-
-//    close(clientSocketfd);
-    return 0;
+    close(clientSocketFD);
 }
 
-int server(char* buffer, unsigned short portNumber) {
-    int serverSocketfd, clientSocket;
-    size_t readValue;
+
+/**
+ * The servers size. Opening a sockets and waiting for clients to connect.
+ * Reading clients data when and running terminal commands.
+ */
+void server(char* buffer, unsigned short portNumber) {
+    int serverSocketFD, clientSocket;
     struct sockaddr_in serverAddress{};
     char serverName[MAX_HOST_NAME + 1];
     struct hostent *hostIp{};
@@ -124,55 +131,54 @@ int server(char* buffer, unsigned short portNumber) {
     memcpy(&serverAddress.sin_addr, hostIp->h_addr, hostIp->h_length); // TODO do we need to use inet_aton?
 
     // creating server socket file descriptor
-    if ((serverSocketfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    if ((serverSocketFD = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         systemError(SOCKET_ERROR_MSG);
     }
 
     // connect the server's address to his socket
-    if (bind(serverSocketfd, (struct sockaddr*) &serverAddress, sizeof(struct sockaddr_in)) < 0) {
-        close(serverSocketfd);
+    if (bind(serverSocketFD, (struct sockaddr*) &serverAddress, sizeof(struct sockaddr_in)) < 0) {
+        close(serverSocketFD);
         systemError(BIND_ERROR_MSG);
     }
 
     // how many clients can listen to the server's socket
-    if (listen(serverSocketfd, MAX_CLIENTS) < 0) {
-        close(serverSocketfd);
+    if (listen(serverSocketFD, MAX_CLIENTS) < 0) {
+        close(serverSocketFD);
         systemError(LISTEN_ERROR_MSG);
     }
 
     fd_set clientsFDs;
-    fd_set readfds;
+    fd_set readFDs;
     FD_ZERO(&clientsFDs);
-    FD_SET(serverSocketfd, &clientsFDs);
+    FD_SET(serverSocketFD, &clientsFDs);
     FD_SET(STDIN_FILENO, &clientsFDs);
     for( ; ; ) {
-        readfds = clientsFDs;
-        if (select(MAX_CLIENTS + 1, &readfds, nullptr,nullptr, nullptr) < 0) {
-            close(serverSocketfd);
+        readFDs = clientsFDs;
+        if (select(MAX_CLIENTS + 1, &readFDs, nullptr,nullptr, nullptr) < 0) {
+            close(serverSocketFD);
             systemError(SELECT_ERROR_MSG);
         }
-        if (FD_ISSET(serverSocketfd, &readfds)) {
+        if (FD_ISSET(serverSocketFD, &readFDs)) {
 
-            if ((clientSocket = accept(serverSocketfd, nullptr, nullptr)) < 0) {
-                close(serverSocketfd);
+            if ((clientSocket = accept(serverSocketFD, nullptr, nullptr)) < 0) {
+                close(serverSocketFD);
                 systemError(ACCEPT_ERROR_MSG);
             }
-            FD_SET(clientSocket, &clientsFDs); // add new client to the clientFDs set
 
-            if((readValue = readData(clientSocket, buffer, MAX_DATA_SIZE) < 0)) {
-                close(serverSocketfd);
+            if(readData(clientSocket, buffer, MAX_DATA_SIZE) < 0) { // reads from the client socket
+                close(serverSocketFD);
                 systemError(READ_ERROR_MSG);
             }
             system(buffer);
             close(clientSocket);
+
         }
     }
-
-
-    close(clientSocket);
-    return 0;
 }
 
+/**
+ * Runs server-client.
+ */
 int main(int argc, char* argv[]) {
     unsigned short portNumber = std::stoi(argv[2]);
     char *buffer = new (std::nothrow) char[MAX_DATA_SIZE];
@@ -180,9 +186,7 @@ int main(int argc, char* argv[]) {
         systemError(MEMORY_ALLOCATION_ERROR_MSG);
     }
     if(strcmp(argv[1], "client") == 0) {
-
-
-        buffer = argv[3]; // terminalCommandToWrite
+        buffer = argv[3];
         client(buffer, portNumber);
     } else {
         server(buffer, portNumber);
