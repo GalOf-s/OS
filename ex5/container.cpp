@@ -197,7 +197,7 @@ int main(int argc, char* argv[]) {
     }
 
     clean_up_cgroup(argv[2]);
-    if(umount("proc") < 0){
+    if(umount("/") < 0){
         systemError(UNMOUNT_ERROR_MSG);
     }
 }

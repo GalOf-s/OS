@@ -100,7 +100,6 @@ void client(char *buffer, unsigned short portNumber) {
         close(clientSocketFD);
         systemError(CONNECT_ERROR_MSG);
     }
-
     writeData(clientSocketFD, buffer, strlen(buffer)); // writes to the clients socket
 
     close(clientSocketFD);
@@ -159,7 +158,6 @@ void server(char* buffer, unsigned short portNumber) {
             systemError(SELECT_ERROR_MSG);
         }
         if (FD_ISSET(serverSocketFD, &readFDs)) {
-
             if ((clientSocket = accept(serverSocketFD, nullptr, nullptr)) < 0) {
                 close(serverSocketFD);
                 systemError(ACCEPT_ERROR_MSG);
@@ -171,7 +169,6 @@ void server(char* buffer, unsigned short portNumber) {
             }
             system(buffer);
             close(clientSocket);
-
         }
     }
 }
