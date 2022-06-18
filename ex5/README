@@ -13,14 +13,39 @@ No remarks.
 ANSWERS:
 
 Q1:
+Linux namespaces are used to partition kernel resources among several groups of processes.
+In the case of pid namespaces, they're used to allow processes in different namespaces to have the
+same pid. This means that on each namespaces there can be different processes with ids 1, 2, 3 etc..
+. which are completely different processes.
 
 Q2:
+Linux mount namespaces can be used to isolate a process by mounting to it a filesystem that will be
+unique to it, and processes in other namespaces won't have access to. It is important for two
+reasons: Firstly. in linux a lot of the internal workings of the OS are manged in files (for example
+ the 'proc' directory, so filesystems separation allows safer process separation. In addition, when
+ the filesystems are separate processes can't access files which contain data for the programs that
+ are run by processes in other namespaces, which is also important for separation.
 
 Q3:
+Linux cgroups (control groups) are used for limit and control a process' resource usage. One
+example for such a resource that can be controlled by c groups is the maximum number of child
+processes that a process is allowed to create.
 
 Q4:
+TODO
 
 Q5:
+The chroot command changes the root directory path for the current process and all of its child
+processes.
+
+Q6:
+The purpose of procfs is to act as an interface to internal data structures in the kernel. It can
+be used to obtain information about the system and to change certain kernel parameters at runtime
+(sysctl) (from the linux kernel documentation).
+It contains a directory for each process which contains data about it, such as its file descriptors,
+environment variables, path to root directory and more. This allows for commands like 'chroot' that
+was mentioned above, to be easily implemented by simply editing the contents of a file in the
+procfs.
 
 
 
