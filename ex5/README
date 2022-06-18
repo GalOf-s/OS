@@ -39,7 +39,7 @@ Unlike fork(), clone() allow the child process to share only parts of its execut
 context with the calling process, and we have the ability to decide the level of insulation
 with the flag argument, such context can be: the memory space, the table of file descriptors,
 and the table of signal handlers.
-When the child process is created with clone(), it executes the function application fn(arg).
+When the child process is created with clone(), it executes the function application by the fn argument.
 This differs from fork(), where execution continues in the child from the point of the fork() call.
 
 Q5:
