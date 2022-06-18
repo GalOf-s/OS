@@ -22,9 +22,9 @@ Q2:
 Linux mount namespaces can be used to isolate a process by mounting to it a filesystem that will be
 unique to it, and processes in other namespaces won't have access to. It is important for two
 reasons: Firstly. in linux a lot of the internal workings of the OS are manged in files (for example
- the 'proc' directory, so filesystems separation allows safer process separation. In addition, when
- the filesystems are separate processes can't access files which contain data for the programs that
- are run by processes in other namespaces, which is also important for separation.
+the 'proc' directory, so filesystems separation allows safer process separation. In addition, when
+the filesystems are separate processes can't access files which contain data for the programs that
+are run by processes in other namespaces, which is also important for separation.
 
 Q3:
 Linux cgroups (control groups) are used for limit and control a process' resource usage. One
@@ -32,7 +32,15 @@ example for such a resource that can be controlled by c groups is the maximum nu
 processes that a process is allowed to create.
 
 Q4:
-TODO
+clone() creates a new process, in a way similar to fork().
+The main use of is to implement threads: multiple threads of control in a program that
+run concurrently in a shared memory space.
+Unlike fork(), clone() allow the child process to share only parts of its execution
+context with the calling process, and we have the ability to decide the level of insulation
+with the flag argument, such context can be: the memory space, the table of file descriptors,
+and the table of signal handlers.
+When the child process is created with clone(), it executes the function application fn(arg).
+This differs from fork(), where execution continues in the child from the point of the fork() call.
 
 Q5:
 The chroot command changes the root directory path for the current process and all of its child
