@@ -69,7 +69,7 @@ void set_cgroup(char* numProcesses){
 
     std::ofstream procs_file;
     procs_file.open (CGROUPS_PIDS CGROUPS_PROCS);
-    procs_file << CHILD_ID<<std::endl;
+    procs_file << getpid() <<std::endl;
     procs_file.close();
 
     std::ofstream max_pids_file;
@@ -137,10 +137,10 @@ void clean_up_cgroup(char* container_root_path){
  */
 int child(void *args) {
     auto *childArgs = (ChildArgs *) args;
-    char* newHostName = childArgs->argv[1];
-    char* newFilesystemDirectory = childArgs->argv[2];
-    char* numProcesses = childArgs->argv[3];
-    char* pathToProgramToRun = childArgs->argv[4];
+    auto newHostName = childArgs->argv[1];
+    auto newFilesystemDirectory = childArgs->argv[2];
+    auto numProcesses = childArgs->argv[3];
+    auto pathToProgramToRun = childArgs->argv[4];
 
     if (sethostname(newHostName, strlen(newHostName)) < 0) { // set new host name
         systemError(SETHOSTNAME_ERROR_MSG);
@@ -160,7 +160,7 @@ int child(void *args) {
         systemError(MOUNT_ERROR_MSG);
     }
 
-    char** argsForProgram = new char*[childArgs->argc - 5];
+    char* argsForProgram[childArgs->argc - 3];
     argsForProgram[0] = pathToProgramToRun;
     int childIndex = 1;
     for (int i = 5; i < childArgs->argc; i++) {
@@ -186,19 +186,21 @@ int main(int argc, char* argv[]) {
     }
 
 	ChildArgs childArgs = {argc, argv};
-    if(clone(child,
+    int childId = (clone(child,
                           stack + STACK,
-                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD,&childArgs) < 0) {
+                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD,&childArgs);
+    if (childId < 0) {
         systemError(CLONE_ERROR_MSG);
     }
 
-    if(wait(nullptr) < 0) {
+    if(waitpid(childId,nullptr,0) < 0) {
         systemError(WAIT_ERROR_MSG);
     }
 
-    clean_up_cgroup(argv[2]);
-    if(umount("proc") < 0){
+    if(umount((std::string(argv[2]) + "/proc").c_str()) < 0){
         systemError(UNMOUNT_ERROR_MSG);
     }
+    clean_up_cgroup(argv[2]);
+    free(stack);
 }
 
