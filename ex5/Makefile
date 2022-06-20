@@ -1,17 +1,21 @@
 CC=g++
-CFLAGS = -Wall -std=c++1 -g
-OBJECTS = sockets contener
-SOURCES = sockets.cpp container.cpp
+SRC=container.cpp sockets.cpp
+BJS=$(SRC:.cpp=.o)
+TARGETS=container sockets
 
 TAR=tar
 TARFLAGS=-cvf
 TARNAME=ex5.tar
-TARSRCS=$(SOURCES) Makefile README
+TARSRCS=$(SRC) Makefile README
 
-all: $(OBJECTS)
+all:$(TARGETS)
 
-$(OBJECTS): %: %.cpp
-        $(CC) $(CFLAGS) -o $@ $<
-        
+container: container.cpp
+	$(CC) $^ -o container
+
+sockets: socket.cpp
+	$(CC) $^ -o sockets
+clean:
+	$(RM) $(TARGETS) *~ *core
 tar:
 	$(TAR) $(TARFLAGS) $(TARNAME) $(TARSRCS)
