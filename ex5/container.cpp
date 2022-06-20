@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) {
 	ChildArgs childArgs = {argc, argv};
     int childId = (clone(child,
                           stack + STACK,
-                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD,&childArgs);
+                          CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD,&childArgs));
     if (childId < 0) {
         systemError(CLONE_ERROR_MSG);
     }
@@ -201,6 +201,6 @@ int main(int argc, char* argv[]) {
         systemError(UNMOUNT_ERROR_MSG);
     }
     clean_up_cgroup(argv[2]);
-    free(stack);
+    delete[] stack;
 }
 
