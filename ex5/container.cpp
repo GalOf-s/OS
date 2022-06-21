@@ -90,6 +90,7 @@ void concat_paths(const char *first_path, const char *second_path, char* &result
 	result = (char*) calloc(strlen(first_path) + strlen(second_path) + 1, sizeof(char));
 	strcpy(result,first_path); // copy string one into the result.
 	strcat(result,second_path); // append string two to the result.
+
 }
 
 /**

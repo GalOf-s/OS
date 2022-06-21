@@ -13,7 +13,7 @@ all:$(TARGETS)
 container: container.cpp
 	$(CC) $^ -o container
 
-sockets: socket.cpp
+sockets: sockets.cpp
 	$(CC) $^ -o sockets
 clean:
 	$(RM) $(TARGETS) *~ *core
